@@ -24,7 +24,9 @@ jobs:
             ninja-build \
             python3-pip \
             python3-venv \
-            device-tree-compiler
+            device-tree-compiler \
+            gcc-multilib \
+            libc6-dev-i386
 
       - name: Install Zephyr SDK
         run: |
