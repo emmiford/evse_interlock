@@ -31,14 +31,13 @@ jobs:
           python3 -m pip install --upgrade pip
           python3 -m pip install west
 
-      - name: Configure west workspace (local manifest)
+      - name: Initialize west workspace
         run: |
-          mkdir -p .west
-          cat > .west/config <<'CONF'
-          [manifest]
-          path = nrf
-          file = west.yml
-          CONF
+          west init -l nrf
+
+      - name: Update west modules (shallow)
+        run: |
+          west update --narrow -o=--depth=1
 
       - name: Run unit tests (native_posix)
         env:
