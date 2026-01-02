@@ -33,9 +33,13 @@ ZTEST(gpio_event, test_edge_detection)
 	gpio_event_init(&st, 0);
 	(void)gpio_event_update(&st, 0, 0, &changed);
 
+	zassert_equal(gpio_event_update(&st, 1, 1, &changed), GPIO_EDGE_NONE, NULL);
+	zassert_false(changed, NULL);
 	zassert_equal(gpio_event_update(&st, 1, 1, &changed), GPIO_EDGE_RISING, NULL);
 	zassert_true(changed, NULL);
 
+	zassert_equal(gpio_event_update(&st, 0, 2, &changed), GPIO_EDGE_NONE, NULL);
+	zassert_false(changed, NULL);
 	zassert_equal(gpio_event_update(&st, 0, 2, &changed), GPIO_EDGE_FALLING, NULL);
 	zassert_true(changed, NULL);
 }
