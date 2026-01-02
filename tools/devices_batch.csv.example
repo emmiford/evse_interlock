@@ -1,0 +1,2 @@
+address,sidewalk_sn,certificate_json_path,device_type,rated_voltage_v,rated_power_heating_kw,rated_power_cooling_kw
+"4223 KNOX CT, DENVER, CO 80211",<64-hex-smsn>,/absolute/path/to/certificate.json,evse,240,0,10

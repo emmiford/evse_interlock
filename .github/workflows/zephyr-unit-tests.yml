@@ -1,0 +1,48 @@
+name: Zephyr Unit Tests
+
+on:
+  push:
+    branches: ["main", "master"]
+  pull_request:
+
+jobs:
+  gpio_event_tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install system deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            cmake \
+            ninja-build \
+            python3-pip \
+            python3-venv \
+            dtc
+
+      - name: Install west
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install west
+
+      - name: Configure west workspace (local manifest)
+        run: |
+          mkdir -p .west
+          cat > .west/config <<'CONF'
+          [manifest]
+          path = nrf
+          file = west.yml
+          CONF
+
+      - name: Run unit tests (native_posix)
+        env:
+          BOARD: native_posix
+          ZEPHYR_BASE: ${{ github.workspace }}/zephyr
+        run: |
+          bash tools/test_unit.sh
