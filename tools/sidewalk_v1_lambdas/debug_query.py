@@ -20,7 +20,7 @@ def lambda_handler(event, context):
 
     table = dynamodb.Table(EVENTS_TABLE)
     resp = table.query(
-        KeyConditionExpression="device_id = :d AND timestamp_ms BETWEEN :s AND :e",
+        KeyConditionExpression="device_id = :d AND timestamp BETWEEN :s AND :e",
         ExpressionAttributeValues={":d": device_id, ":s": start_ms, ":e": end_ms},
     )
     return {"items": resp.get("Items", [])}

@@ -23,12 +23,12 @@ def lambda_handler(event, context):
 
     table = dynamodb.Table(EVENTS_TABLE)
     resp = table.query(
-        KeyConditionExpression="device_id = :d AND timestamp_ms BETWEEN :s AND :e",
+        KeyConditionExpression="device_id = :d AND timestamp BETWEEN :s AND :e",
         ExpressionAttributeValues={":d": device_id, ":s": start_ms, ":e": end_ms},
     )
     buckets = defaultdict(float)
     for item in resp.get("Items", []):
-        ts = int(item.get("timestamp_ms", 0))
+        ts = int(item.get("timestamp", 0))
         energy = float(item.get("energy_delivered_kwh", 0)) + float(
             item.get("energy_consumed_kwh", 0)
         )

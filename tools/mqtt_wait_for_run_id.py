@@ -25,7 +25,7 @@ def get_endpoint(region):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--run-id", required=True)
-    parser.add_argument("--topic", default="sidewalk/app_data")
+    parser.add_argument("--topic", default="sidewalk/#")
     parser.add_argument("--timeout", type=int, default=60)
     parser.add_argument("--region", default=os.environ.get("AWS_REGION", "us-east-1"))
     parser.add_argument("--endpoint", default=os.environ.get("AWS_IOT_ENDPOINT"))

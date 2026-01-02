@@ -4,33 +4,28 @@ set -euo pipefail
 REGION="${AWS_REGION:-us-east-1}"
 PROJECT_PREFIX="${PROJECT_PREFIX:-sidewalk-v1}"
 OUTPUT_FILE="${OUTPUT_FILE:-aws_setup_output.txt}"
-
-exec >"$OUTPUT_FILE" 2>&1
-
 DEVICE_ID="${DEVICE_ID:-}"
 
-if [[ -z "$DEVICE_ID" && -f "aws_wireless_device.json" ]]; then
-  DEVICE_ID="$(python3 - <<'PY'
-import json
-with open("aws_wireless_device.json", "r", encoding="utf-8") as f:
-    data = json.load(f)
-print(data.get("Sidewalk", {}).get("SidewalkManufacturingSn", ""))
-PY
-)"
-fi
+exec >"$OUTPUT_FILE" 2>&1
 
 if [[ -z "$DEVICE_ID" ]]; then
   echo "Set DEVICE_ID before running."
   exit 1
 fi
 
-echo "== Publish test event to IoT Core =="
+echo "== Resolve IoT Data endpoint =="
+ENDPOINT="$(aws --region "$REGION" iot describe-endpoint --endpoint-type iot:Data-ATS --query endpointAddress --output text)"
+echo "Endpoint: ${ENDPOINT}"
+
+echo "== Publish test event to explicit endpoint =="
 TS_MS="$(python3 - <<'PY'
 import time
 print(int(time.time() * 1000))
 PY
 )"
+
 aws --region "$REGION" iot-data publish \
+  --endpoint-url "https://${ENDPOINT}" \
   --cli-binary-format raw-in-base64-out \
   --topic "sidewalk/test/${DEVICE_ID}/events" \
   --payload "{
@@ -44,10 +39,11 @@ aws --region "$REGION" iot-data publish \
     \"data\":{\"evse\":{\"pilot_state\":\"B\",\"pwm_duty_cycle\":50.0,\"current_draw\":0,\"proximity_detected\":true,\"session_id\":\"test\",\"energy_delivered_kwh\":0}}
   }"
 
-echo "== Query DynamoDB for device_id =="
+echo "== Query v2 table =="
 aws --region "$REGION" dynamodb query \
-  --table-name "${PROJECT_PREFIX}-device_events" \
+  --table-name "${PROJECT_PREFIX}-device_events_v2" \
   --key-condition-expression "device_id = :d" \
-  --expression-attribute-values "{\":d\":{\"S\":\"${DEVICE_ID}\"}}"
+  --expression-attribute-values "{\":d\":{\"S\":\"${DEVICE_ID}\"}}" \
+  --limit 5
 
-echo "== E2E test complete =="
+echo "== Publish verify complete =="

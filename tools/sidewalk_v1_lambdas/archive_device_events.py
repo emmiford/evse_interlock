@@ -12,7 +12,7 @@ def lambda_handler(event, context):
         if rec.get("eventName") not in ("INSERT", "MODIFY"):
             continue
         img = rec.get("dynamodb", {}).get("NewImage", {})
-        ts = int(img.get("timestamp_ms", {}).get("N", "0"))
+        ts = int(img.get("timestamp", {}).get("N", "0"))
         day = datetime.datetime.utcfromtimestamp(ts / 1000).strftime("%Y/%m/%d")
         device_id = img.get("device_id", {}).get("S", "unknown")
         key = f"{day}/{device_id}/{ts}.json"

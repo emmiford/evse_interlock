@@ -9,7 +9,7 @@ OUTPUT_FILE="${OUTPUT_FILE:-aws_setup_output.txt}"
 exec >"$OUTPUT_FILE" 2>&1
 
 ROLE_NAME="${PROJECT_PREFIX}-query-lambda-role"
-DEVICE_EVENTS_TABLE="${PROJECT_PREFIX}-device_events"
+DEVICE_EVENTS_TABLE="${PROJECT_PREFIX}-device_events_v2"
 DEVICE_CONFIG_TABLE="${PROJECT_PREFIX}-device_config"
 
 aws --region "$REGION" iam create-role \

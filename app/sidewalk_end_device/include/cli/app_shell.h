@@ -275,11 +275,14 @@ int cmd_sid_option_sid_id(const struct shell *shell, int32_t argc, const char **
 int cmd_sid_last_status(const struct shell *shell, int32_t argc, const char **argv);
 int cmd_sid_conn_request(const struct shell *shell, int32_t argc, const char **argv);
 int cmd_sid_get_time(const struct shell *shell, int32_t argc, const char **argv);
+int cmd_sid_time_set(const struct shell *shell, int32_t argc, const char **argv);
 int cmd_sid_set_dst_id(const struct shell *shell, int32_t argc, const char **argv);
 int cmd_sid_set_send_link(const struct shell *shell, int32_t argc, const char **argv);
 int cmd_sid_set_rsp_id(const struct shell *shell, int32_t argc, const char **argv);
 int cmd_sid_sdk_version(const struct shell *shell, int32_t argc, const char **argv);
 int cmd_sid_sdk_config(const struct shell *shell, int32_t argc, const char **argv);
+
+int cmd_evse_read(const struct shell *shell, int32_t argc, const char **argv);
 
 #ifdef CONFIG_SIDEWALK_TRACE_HEAP
 int cmd_sid_print_heap_stats(const struct shell *shell, int32_t argc, const char **argv);

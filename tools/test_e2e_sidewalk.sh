@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="/Users/jan/dev/sidewalk-workspace"
 BUILD_DIR="${ROOT_DIR}/build"
-APP_DIR="${ROOT_DIR}/sidewalk/samples/sid_end_device"
+APP_DIR="${ROOT_DIR}/app/sidewalk_end_device"
 PROBE_ID="${PROBE_ID:-0700000100120036470000124e544634a5a5a5a597969908}"
 RTT_LOG="${ROOT_DIR}/build/e2e_rtt.log"
 

@@ -17,10 +17,10 @@ aws --region "$REGION" dynamodb create-table \
   --table-name "$DEVICE_EVENTS_TABLE" \
   --attribute-definitions \
     AttributeName=device_id,AttributeType=S \
-    AttributeName=timestamp_ms,AttributeType=N \
+    AttributeName=timestamp,AttributeType=N \
   --key-schema \
     AttributeName=device_id,KeyType=HASH \
-    AttributeName=timestamp_ms,KeyType=RANGE \
+    AttributeName=timestamp,KeyType=RANGE \
   --billing-mode PAY_PER_REQUEST \
   --stream-specification StreamEnabled=true,StreamViewType=NEW_IMAGE \
   || true
@@ -169,7 +169,7 @@ aws --region "$REGION" athena start-query-execution \
 aws --region "$REGION" athena start-query-execution \
   --query-string "CREATE EXTERNAL TABLE IF NOT EXISTS ${ATHENA_DB}.${ATHENA_TABLE} (
     device_id string,
-    timestamp_ms bigint,
+    timestamp bigint,
     device_type string,
     event_type string,
     site_id string,

@@ -13,6 +13,7 @@
 #include <sys/errno.h>
 #include <zephyr/shell/shell.h>
 #include <zephyr/sys/util.h>
+#include <zephyr/kernel.h>
 
 #include <sid_api.h>
 #include <sid_900_cfg.h>
@@ -23,6 +24,8 @@
 #include <sid_sdk_version.h>
 #include <sidewalk_version.h>
 #include <sidewalk.h>
+#include "evse.h"
+#include "time_sync.h"
 #if defined(CONFIG_SIDEWALK_DFU_SERVICE_BLE)
 #include <sidewalk_dfu/nordic_dfu.h>
 #endif
@@ -108,6 +111,8 @@ SHELL_STATIC_SUBCMD_SET_CREATE(
 		      CMD_SID_CONN_REQUEST_ARG_REQUIRED, CMD_SID_CONN_REQUEST_ARG_OPTIONAL),
 	SHELL_CMD_ARG(get_time, NULL, CMD_SID_GET_TIME_DESCRIPTION, cmd_sid_get_time,
 		      CMD_SID_GET_TIME_ARG_REQUIRED, CMD_SID_GET_TIME_ARG_OPTIONAL),
+	SHELL_CMD_ARG(time_set, NULL, "Set epoch time ms: time_set <epoch_ms>",
+		      cmd_sid_time_set, 2, 0),
 	SHELL_CMD_ARG(set_dst_id, NULL, CMD_SID_SET_DST_ID_DESCRIPTION, cmd_sid_set_dst_id,
 		      CMD_SID_SET_DST_ID_ARG_REQUIRED, CMD_SID_SET_DST_ID_ARG_OPTIONAL),
 	SHELL_CMD_ARG(set_send_link, NULL, CMD_SID_SET_SEND_LINK_DESCRIPTION, cmd_sid_set_send_link,
@@ -120,6 +125,8 @@ SHELL_STATIC_SUBCMD_SET_CREATE(
 	SHELL_CMD_ARG(sdk_config, NULL, CMD_SID_SDK_CONFIG_DESCRIPTION, cmd_sid_sdk_config,
 		      CMD_SID_SDK_CONFIG_DESCRIPTION_ARG_REQUIRED,
 		      CMD_SID_SDK_CONFIG_DESCRIPTION_ARG_OPTIONAL),
+	SHELL_CMD_ARG(evse_read, NULL, "Read EVSE sensors (pilot mv/duty/current/prox)",
+		      cmd_evse_read, 1, 0),
 #ifdef CONFIG_SIDEWALK_TRACE_HEAP
 	SHELL_CMD_ARG(heap_stat, NULL, "print heap statistics", cmd_sid_print_heap_stats, 1, 0),
 #endif
@@ -1034,6 +1041,16 @@ int cmd_sid_get_time(const struct shell *shell, int32_t argc, const char **argv)
 	return cmd_sid_simple_param(dut_event_get_time, &time_type);
 }
 
+int cmd_sid_time_set(const struct shell *shell, int32_t argc, const char **argv)
+{
+	CHECK_ARGUMENT_COUNT(argc, 2, 0);
+
+	int64_t epoch_ms = strtoll(argv[1], NULL, 10);
+	time_sync_apply_epoch_ms(epoch_ms, k_uptime_get());
+	shell_info(shell, "time_sync set epoch_ms=%lld", (long long)epoch_ms);
+	return 0;
+}
+
 int cmd_sid_set_dst_id(const struct shell *shell, int32_t argc, const char **argv)
 {
 	CHECK_ARGUMENT_COUNT(argc, CMD_SID_SET_DST_ID_ARG_REQUIRED,
@@ -1125,6 +1142,33 @@ int cmd_sid_sdk_config(const struct shell *shell, int32_t argc, const char **arg
 			   IS_ENABLED(CONFIG_SIDEWALK_LINK_MASK_LORA));
 	return 0;
 }
+
+#if defined(CONFIG_SID_END_DEVICE_EVSE_ENABLED)
+int cmd_evse_read(const struct shell *shell, int32_t argc, const char **argv)
+{
+	CHECK_ARGUMENT_COUNT(argc, 1, 0);
+
+	struct evse_raw raw = { 0 };
+	int ret = evse_read_raw(&raw);
+	if (ret) {
+		shell_error(shell, "evse_read failed: %d", ret);
+		return ret;
+	}
+
+	shell_info(shell, "pilot_mv=%d state=%c duty=%.2f current_a=%.3f prox=%d",
+		   raw.pilot_mv, evse_pilot_state_to_char(raw.pilot_state),
+		   raw.pwm_duty_cycle, raw.current_draw_a, raw.proximity_detected);
+	return 0;
+}
+#else
+int cmd_evse_read(const struct shell *shell, int32_t argc, const char **argv)
+{
+	ARG_UNUSED(shell);
+	ARG_UNUSED(argc);
+	ARG_UNUSED(argv);
+	return -ENOTSUP;
+}
+#endif
 
 #ifdef CONFIG_SIDEWALK_TRACE_HEAP
 int cmd_sid_print_heap_stats(const struct shell *shell, int32_t argc, const char **argv)

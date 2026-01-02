@@ -17,6 +17,11 @@ src/main.c
 src/sidewalk.c
 src/sidewalk_events.c
 src/gpio_event.c
+src/time_sync.c
+)
+
+target_sources_ifdef(CONFIG_SID_END_DEVICE_EVSE_ENABLED app PRIVATE
+    src/evse.c
 )
 
 target_sources_ifdef(CONFIG_SIDEWALK_FILE_TRANSFER app PRIVATE 

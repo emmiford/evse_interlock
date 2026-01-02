@@ -75,6 +75,109 @@ config SID_END_DEVICE_GPIO_TEST_TRANSITIONS
     help
       Total simulated transitions before stopping the test.
 
+config SID_END_DEVICE_EVSE_ENABLED
+    bool "Enable EVSE (J1772) sensing"
+    default y
+    depends on GPIO && ADC
+    help
+      Enables pilot voltage, PWM duty cycle, proximity, and current sensing.
+
+config SID_END_DEVICE_EVSE_SAMPLE_INTERVAL_MS
+    int "EVSE sample interval (ms)"
+    default 2000
+    help
+      Polling interval for pilot/current/proximity updates.
+
+config SID_END_DEVICE_EVSE_PWM_GPIO_PORT
+    int "EVSE PWM GPIO port (0 or 1)"
+    default 0
+    help
+      GPIO port for pilot PWM input.
+
+config SID_END_DEVICE_EVSE_PWM_GPIO_PIN
+    int "EVSE PWM GPIO pin"
+    default 1
+    help
+      GPIO pin for pilot PWM input capture.
+
+config SID_END_DEVICE_EVSE_PROX_GPIO_PORT
+    int "EVSE proximity GPIO port (0 or 1)"
+    default 0
+    help
+      GPIO port for proximity detect input.
+
+config SID_END_DEVICE_EVSE_PROX_GPIO_PIN
+    int "EVSE proximity GPIO pin"
+    default 4
+    help
+      GPIO pin for proximity detect input.
+
+config SID_END_DEVICE_EVSE_PILOT_ADC_CHANNEL
+    int "EVSE pilot ADC channel"
+    default 2
+    help
+      ADC channel for pilot voltage measurement.
+
+config SID_END_DEVICE_EVSE_CURRENT_ADC_CHANNEL
+    int "EVSE current ADC channel"
+    default 3
+    help
+      ADC channel for current sensor input.
+
+config SID_END_DEVICE_EVSE_PILOT_SCALE_NUM
+    int "Pilot voltage scale numerator"
+    default 1
+    help
+      Multiplier applied to pilot ADC mV reading.
+
+config SID_END_DEVICE_EVSE_PILOT_SCALE_DEN
+    int "Pilot voltage scale denominator"
+    default 1
+    help
+      Divider applied to pilot ADC mV reading.
+
+config SID_END_DEVICE_EVSE_PILOT_BIAS_MV
+    int "Pilot voltage bias (mV)"
+    default 0
+    help
+      Bias to subtract for recovering negative pilot voltages.
+
+config SID_END_DEVICE_EVSE_CURRENT_SCALE_NUM
+    int "Current scale numerator (mA per mV)"
+    default 1
+    help
+      Multiplier applied to current ADC mV reading.
+
+config SID_END_DEVICE_EVSE_CURRENT_SCALE_DEN
+    int "Current scale denominator (mA per mV)"
+    default 1
+    help
+      Divider applied to current ADC mV reading.
+
+config SID_END_DEVICE_EVSE_NOMINAL_VOLTAGE_V
+    int "Nominal line voltage (V)"
+    default 240
+    help
+      Used for kWh estimation (current * voltage).
+
+config SID_END_DEVICE_EVSE_PILOT_TOLERANCE_MV
+    int "Pilot state tolerance (mV)"
+    default 1000
+    help
+      Tolerance applied to pilot voltage state mapping.
+
+config SID_END_DEVICE_DEVICE_ID
+    string "Device ID for telemetry payloads"
+    default "unknown"
+    help
+      Identifier included in outbound telemetry JSON.
+
+config SID_END_DEVICE_DEVICE_TYPE
+    string "Device type for telemetry payloads"
+    default "evse"
+    help
+      Device type included in outbound telemetry JSON.
+
 endif #SID_END_DEVICE_HELLO
 
 if SID_END_DEVICE_SENSOR_MONITORING

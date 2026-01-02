@@ -30,9 +30,14 @@
 #include <zephyr/smf.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/drivers/gpio.h>
+#include <zephyr/sys/util.h>
 #include <zephyr/random/random.h>
 #include <inttypes.h>
+#include <stdlib.h>
+#include <string.h>
 #include "gpio_event.h"
+#include "evse.h"
+#include "time_sync.h"
 
 #include <json_printer/sidTypes2Json.h>
 #include <json_printer/sidTypes2str.h>
@@ -44,6 +49,9 @@ LOG_MODULE_REGISTER(app, CONFIG_SIDEWALK_LOG_LEVEL);
 #define APP_GPIO_DEBOUNCE_MS CONFIG_SID_END_DEVICE_GPIO_DEBOUNCE_MS
 #define APP_GPIO_POLL_INTERVAL_MS CONFIG_SID_END_DEVICE_GPIO_POLL_INTERVAL_MS
 #define APP_GPIO_SIM_INTERVAL_MS CONFIG_SID_END_DEVICE_GPIO_SIM_INTERVAL_MS
+#define APP_DEVICE_ID CONFIG_SID_END_DEVICE_DEVICE_ID
+#define APP_DEVICE_TYPE CONFIG_SID_END_DEVICE_DEVICE_TYPE
+#define APP_EVSE_SAMPLE_INTERVAL_MS CONFIG_SID_END_DEVICE_EVSE_SAMPLE_INTERVAL_MS
 
 static uint32_t persistent_link_mask;
 static struct k_work_delayable periodic_send_work;
@@ -78,6 +86,11 @@ static char app_gpio_run_id[16];
 static const char *app_gpio_run_id = NULL;
 #endif
 
+#if defined(CONFIG_SID_END_DEVICE_EVSE_ENABLED)
+static struct k_work_delayable app_evse_work;
+static struct k_timer app_evse_timer;
+#endif
+
 static int app_gpio_read_state(void)
 {
 #if defined(CONFIG_SID_END_DEVICE_GPIO_SIMULATOR)
@@ -95,6 +108,12 @@ static int app_gpio_read_state(void)
 #else
 	return app_gpio_raw_state;
 #endif
+}
+
+static int64_t app_get_timestamp_ms(void)
+{
+	int64_t uptime_ms = k_uptime_get();
+	return time_sync_get_timestamp_ms(uptime_ms);
 }
 
 static void free_sid_gpio_event_ctx(void *ctx)
@@ -116,17 +135,18 @@ static void app_gpio_send_event(const char *pin_alias, int state, gpio_edge_t ed
 		return;
 	}
 
-	int64_t uptime_ms = k_uptime_get();
-	char payload[160];
-	int len = gpio_event_build_payload(payload, sizeof(payload), pin_alias, state, edge,
-					   uptime_ms, app_gpio_run_id);
+	int64_t timestamp_ms = app_get_timestamp_ms();
+	char payload[256];
+	int len = gpio_event_build_payload(payload, sizeof(payload), APP_DEVICE_ID,
+					   APP_DEVICE_TYPE, pin_alias, state, edge,
+					   timestamp_ms, app_gpio_run_id);
 	if (len < 0) {
 		LOG_ERR("GPIO payload format failed");
 		return;
 	}
 
-	LOG_INF("GPIO event: %s state=%d edge=%s uptime_ms=%" PRId64, pin_alias, state,
-		gpio_edge_str(edge), uptime_ms);
+	LOG_INF("GPIO event: %s state=%d edge=%s timestamp_ms=%" PRId64, pin_alias, state,
+		gpio_edge_str(edge), timestamp_ms);
 
 	sidewalk_msg_t *evt = sid_hal_malloc(sizeof(sidewalk_msg_t));
 	if (!evt) {
@@ -159,6 +179,75 @@ static void app_gpio_send_event(const char *pin_alias, int state, gpio_edge_t ed
 		LOG_INF("Sidewalk send: ok 0");
 	}
 }
+
+#if defined(CONFIG_SID_END_DEVICE_EVSE_ENABLED)
+static void free_sid_evse_event_ctx(void *ctx)
+{
+	free_sid_gpio_event_ctx(ctx);
+}
+
+static void app_evse_send_event(const struct evse_event *evt, int64_t timestamp_ms)
+{
+	if (!app_sidewalk_ready) {
+		LOG_WRN("Sidewalk not ready; drop evse event");
+		return;
+	}
+
+	char payload[320];
+	int len = evse_build_payload(payload, sizeof(payload), APP_DEVICE_ID, APP_DEVICE_TYPE,
+				     timestamp_ms, evt);
+	if (len < 0) {
+		LOG_ERR("EVSE payload format failed");
+		return;
+	}
+
+	LOG_INF("EVSE event: pilot=%c prox=%d duty=%.2f current=%.2fA energy=%.4f",
+		evse_pilot_state_to_char(evt->pilot_state), evt->proximity_detected,
+		evt->pwm_duty_cycle, evt->current_draw_a, evt->energy_kwh);
+
+	sidewalk_msg_t *msg = sid_hal_malloc(sizeof(sidewalk_msg_t));
+	if (!msg) {
+		LOG_ERR("Failed to alloc evse msg context");
+		return;
+	}
+	memset(msg, 0x0, sizeof(*msg));
+
+	msg->msg.size = (size_t)len;
+	msg->msg.data = sid_hal_malloc(msg->msg.size);
+	if (!msg->msg.data) {
+		sid_hal_free(msg);
+		LOG_ERR("Failed to alloc evse msg data");
+		return;
+	}
+	memcpy(msg->msg.data, payload, msg->msg.size);
+
+	msg->desc.type = SID_MSG_TYPE_NOTIFY;
+	msg->desc.link_type = SID_LINK_TYPE_ANY;
+	msg->desc.link_mode = SID_LINK_MODE_CLOUD;
+
+	int err = sidewalk_event_send(sidewalk_event_send_msg, msg, free_sid_evse_event_ctx);
+	if (err) {
+		free_sid_evse_event_ctx(msg);
+		LOG_ERR("Sidewalk send: err %d", err);
+	}
+}
+
+static void app_evse_work_handler(struct k_work *work)
+{
+	ARG_UNUSED(work);
+	struct evse_event evt = { 0 };
+	int64_t ts_ms = app_get_timestamp_ms();
+	if (evse_poll(&evt, ts_ms)) {
+		app_evse_send_event(&evt, ts_ms);
+	}
+}
+
+static void app_evse_timer_handler(struct k_timer *timer)
+{
+	ARG_UNUSED(timer);
+	(void)k_work_reschedule(&app_evse_work, K_NO_WAIT);
+}
+#endif
 
 static void app_gpio_debounce_work_handler(struct k_work *work)
 {
@@ -296,6 +385,32 @@ static void free_sid_echo_event_ctx(void *ctx)
 	sid_hal_free(echo);
 }
 
+static void app_handle_time_sync(const struct sid_msg *msg)
+{
+	if (!msg || !msg->data || msg->size == 0) {
+		return;
+	}
+
+	char buf[128];
+	size_t copy_len = MIN(msg->size, sizeof(buf) - 1);
+	memcpy(buf, msg->data, copy_len);
+	buf[copy_len] = '\0';
+
+	if (!strstr(buf, "\"cmd\":\"time_sync\"")) {
+		return;
+	}
+
+	char *epoch_ptr = strstr(buf, "\"epoch_ms\":");
+	if (!epoch_ptr) {
+		return;
+	}
+
+	int64_t epoch_ms = strtoll(epoch_ptr + strlen("\"epoch_ms\":"), NULL, 10);
+	int64_t now_ms = k_uptime_get();
+	time_sync_apply_epoch_ms(epoch_ms, now_ms);
+	LOG_INF("Time sync applied: epoch_ms=%" PRId64, epoch_ms);
+}
+
 static void on_sidewalk_msg_received(const struct sid_msg_desc *msg_desc, const struct sid_msg *msg,
 				     void *context)
 {
@@ -306,6 +421,7 @@ static void on_sidewalk_msg_received(const struct sid_msg_desc *msg_desc, const 
 	application_state_receiving(&global_state_notifier, true);
 	application_state_receiving(&global_state_notifier, false);
 #endif
+	app_handle_time_sync(msg);
 
 #ifdef CONFIG_SID_END_DEVICE_ECHO_MSGS
 	if (msg_desc->type == SID_MSG_TYPE_GET || msg_desc->type == SID_MSG_TYPE_SET) {
@@ -621,12 +737,24 @@ static struct sid_time_sync_config default_time_sync_config = {
 
 void app_start(void)
 {
+	time_sync_init();
 	if (app_buttons_init()) {
 		LOG_ERR("Cannot init buttons");
 	}
 	k_work_init_delayable(&periodic_send_work, periodic_send_work_handler);
 #if defined(CONFIG_SID_END_DEVICE_GPIO_EVENTS) && defined(CONFIG_GPIO)
 	app_gpio_init();
+#endif
+
+#if defined(CONFIG_SID_END_DEVICE_EVSE_ENABLED)
+	if (evse_init()) {
+		LOG_ERR("EVSE init failed");
+	} else {
+		k_work_init_delayable(&app_evse_work, app_evse_work_handler);
+		k_timer_init(&app_evse_timer, app_evse_timer_handler, NULL);
+		k_timer_start(&app_evse_timer, K_MSEC(APP_EVSE_SAMPLE_INTERVAL_MS),
+			      K_MSEC(APP_EVSE_SAMPLE_INTERVAL_MS));
+	}
 #endif
 
 #if defined(CONFIG_STATE_NOTIFIER)

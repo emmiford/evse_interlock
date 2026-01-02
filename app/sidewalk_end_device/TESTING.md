@@ -26,14 +26,31 @@ Note: RAK4631 DTS has no `gpio-keys`/`button0` aliases; reset is wired to nRESET
   - `Sidewalk send: ok 0`
 
 ### End-to-end AWS verification
-- Focus: payloads arriving on IoT Core topic `sidewalk/app_data`.
+- Focus: payloads arriving on IoT Core topic `sidewalk/#`.
 - Command:
   - `tools/test_e2e_sidewalk.sh`
 - Requirements:
   - AWS credentials configured (`AWS_PROFILE` or default creds).
   - `awsiotsdk` installed:
     - `python3 -m pip install awsiotsdk`
-  - Optional: `AWS_REGION` (defaults to `us-east-1`), `AWS_IOT_ENDPOINT` to override endpoint lookup.
+- Optional: `AWS_REGION` (defaults to `us-east-1`), `AWS_IOT_ENDPOINT` to override endpoint lookup.
+  - Payloads include `schema_version`, `device_id`, `device_type`, `timestamp`, and `data.gpio`.
+  - `timestamp` uses uptime until a time sync downlink is received.
+
+### Time sync (optional)
+- Send a downlink payload: `{"cmd":"time_sync","epoch_ms":1704067200000}`
+- Device computes `epoch_at_boot_ms` and switches `timestamp` to epoch ms.
+- CLI alternative: `sid time_set <epoch_ms>` (if CLI enabled).
+
+### EVSE sampling (optional)
+- Enable `CONFIG_SID_END_DEVICE_EVSE_ENABLED` and set GPIO/ADC mappings in Kconfig.
+- EVSE payloads are sent on pilot/proximity state changes.
+- CLI: `sid evse_read` prints pilot mv/state, duty cycle, current, and proximity.
+
+### EVSE bring-up checklist
+- TODO: Calibrate `EVSE_PILOT_SCALE_*` and `EVSE_PILOT_BIAS_MV`.
+- TODO: Consider upgrading PWM capture to true timer input capture if needed.
+- Step: Build/flash the firmware and validate raw readings.
 
 ## How to run each tier
 
