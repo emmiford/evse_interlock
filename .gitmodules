@@ -1,0 +1,9 @@
+[submodule "tools/bsim"]
+	path = tools/bsim
+	url = https://github.com/BabbleSim/bsim_west
+[submodule "tools/edtt"]
+	path = tools/edtt
+	url = https://github.com/zephyrproject-rtos/edtt
+[submodule "tools/net-tools"]
+	path = tools/net-tools
+	url = https://github.com/zephyrproject-rtos/net-tools
