@@ -22,6 +22,14 @@ Build notes:
 
 For security guidance, see `SECURITY.md`.
 
+## Reproducible workspace setup
+
+- Initialize a west workspace from the local manifest:
+  - `west init -l nrf` (or the manifest directory you intend to use, e.g. `sidewalk`)
+- Fetch pinned module revisions:
+  - `west update`
+- Revisions are pinned in the local `west.yml` manifest, so exact module SHAs are reproducible.
+
 ## Project Structure
 
 - `app/sidewalk_end_device`: product-owned Sidewalk end-device app (formerly based on Sidewalk sample).

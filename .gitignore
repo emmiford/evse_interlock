@@ -1,3 +1,44 @@
+# Secrets / certificates / keys
+*.pem
+*.crt
+*.cer
+*.key
+*.der
+*.pfx
+*.p12
+*.csr
+
+# Sidewalk / device provisioning
+*certificate*
+*cert_chain*
+*device_cert*
+*device_key*
+*private_key*
+*public_key*
+
+# Nordic / provisioning output
+provisioning/
+credentials/
+factory_data/
+factory/
+
+# Local config overrides
+prj.conf.local
+*.conf.local
+.overlay
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Zephyr / west
+.build/
+build/
+zephyr/.config
+zephyr/include/generated/
+
+
 # Prerequisites
 *.d
 
@@ -53,3 +94,16 @@ dkms.conf
 
 # debug information files
 *.dwo
+
+# Zephyr/west workspace
+.west/
+.zephyr/
+build/
+build-*/
+build-tests/
+
+# Python/env tooling
+.venv/
+venv/
+.cache/
+.pytest_cache/

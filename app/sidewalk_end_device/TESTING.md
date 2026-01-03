@@ -12,7 +12,7 @@ Note: RAK4631 DTS has no `gpio-keys`/`button0` aliases; reset is wired to nRESET
 ## Test Plan (Pragmatic)
 
 ### Unit tests (host)
-- Focus: debounce, edge detection, payload formatting, no-spam behavior.
+- Focus: debounce, edge detection, telemetry payload formatting, no-spam behavior.
 - Command:
   - `tools/test_unit.sh`
 
@@ -49,8 +49,14 @@ Note: RAK4631 DTS has no `gpio-keys`/`button0` aliases; reset is wired to nRESET
 
 ### EVSE bring-up checklist
 - TODO: Calibrate `EVSE_PILOT_SCALE_*` and `EVSE_PILOT_BIAS_MV`.
+- TODO: Calibrate `EVSE_CURRENT_SCALE_*` for your current sensor.
 - TODO: Consider upgrading PWM capture to true timer input capture if needed.
+- TODO: Validate PWM duty accuracy against a scope.
 - Step: Build/flash the firmware and validate raw readings.
+
+### Remaining project TODOs
+- TODO: Seed `device_config` table with real device parameters.
+- TODO: Validate end-to-end with the real Sidewalk device (not just test publishes).
 
 ## How to run each tier
 
@@ -75,6 +81,6 @@ aws iot describe-endpoint --endpoint-type iot:Data-ATS --region us-east-1
 ```
 
 ## Where to look when failures happen
-- Unit tests: `build-tests/gpio_event/zephyr/`.
+- Unit tests: `build-tests/gpio_event/zephyr/`, `build-tests/telemetry/zephyr/`.
 - HIL logs: `build/hil_gpio_rtt.log`.
 - E2E logs: `build/e2e_rtt.log`.

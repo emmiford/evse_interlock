@@ -22,7 +22,7 @@ LOG_MODULE_REGISTER(evse, CONFIG_SIDEWALK_LOG_LEVEL);
 #define ADC_RESOLUTION 12
 #define ADC_GAIN ADC_GAIN_1_6
 #define ADC_REFERENCE ADC_REF_INTERNAL
-#define ADC_ACQ_TIME ADC_ACQ_TIME_DEFAULT
+#define EVSE_ADC_ACQ_TIME ADC_ACQ_TIME_DEFAULT
 
 #define EVSE_PWM_PORT CONFIG_SID_END_DEVICE_EVSE_PWM_GPIO_PORT
 #define EVSE_PWM_PIN CONFIG_SID_END_DEVICE_EVSE_PWM_GPIO_PIN
@@ -119,7 +119,7 @@ static int adc_read_channel(int channel, int16_t *out)
 	struct adc_channel_cfg cfg = {
 		.gain = ADC_GAIN,
 		.reference = ADC_REFERENCE,
-		.acquisition_time = ADC_ACQ_TIME,
+		.acquisition_time = EVSE_ADC_ACQ_TIME,
 		.channel_id = channel,
 		.differential = 0,
 	};
@@ -324,32 +324,6 @@ bool evse_poll(struct evse_event *evt, int64_t timestamp_ms)
 	last_pilot_state = state;
 	last_prox_state = prox;
 	return evt->send;
-}
-
-int evse_build_payload(char *buf, size_t buf_len, const char *device_id,
-		       const char *device_type, int64_t timestamp_ms,
-		       const struct evse_event *evt)
-{
-	if (!buf || buf_len == 0 || !device_id || !device_type || !evt) {
-		return -1;
-	}
-
-	int len = snprintf(
-		buf, buf_len,
-		"{\"schema_version\":\"1.0\",\"device_id\":\"%s\",\"device_type\":\"%s\","
-		"\"timestamp\":%lld,\"event_type\":\"%s\",\"location\":null,\"run_id\":null,"
-		"\"data\":{\"evse\":{\"pilot_state\":\"%c\",\"pwm_duty_cycle\":%.2f,"
-		"\"current_draw\":%.3f,\"proximity_detected\":%s,\"session_id\":\"%s\","
-		"\"energy_delivered_kwh\":%.4f}}}",
-		device_id, device_type, (long long)timestamp_ms, evt->event_type,
-		evse_pilot_state_to_char(evt->pilot_state), evt->pwm_duty_cycle,
-		evt->current_draw_a, evt->proximity_detected ? "true" : "false",
-		evt->session_id ? evt->session_id : "", evt->energy_kwh);
-
-	if (len < 0 || (size_t)len >= buf_len) {
-		return -1;
-	}
-	return len;
 }
 
 int evse_read_raw(struct evse_raw *raw)

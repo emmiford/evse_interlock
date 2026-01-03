@@ -11,12 +11,15 @@ find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(sidewalk_sid_end_device)
 
 # Source files
-target_include_directories(app PRIVATE include)
+target_include_directories(app PRIVATE include src)
 target_sources(app PRIVATE
 src/main.c
 src/sidewalk.c
 src/sidewalk_events.c
 src/gpio_event.c
+src/sidewalk_msg.c
+src/telemetry/telemetry_gpio.c
+src/telemetry/telemetry_evse.c
 src/time_sync.c
 )
 

@@ -32,8 +32,4 @@ gpio_edge_t gpio_event_update(struct gpio_event_state *st, int state, int64_t no
 
 const char *gpio_edge_str(gpio_edge_t edge);
 
-int gpio_event_build_payload(char *buf, size_t buf_len, const char *device_id,
-			     const char *device_type, const char *pin_alias, int state,
-			     gpio_edge_t edge, int64_t uptime_ms, const char *run_id);
-
 #endif /* GPIO_EVENT_H */

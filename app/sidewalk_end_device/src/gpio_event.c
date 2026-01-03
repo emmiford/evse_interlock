@@ -5,9 +5,6 @@
  */
 #include "gpio_event.h"
 
-#include <stdio.h>
-#include <string.h>
-
 void gpio_event_init(struct gpio_event_state *st, int64_t debounce_ms)
 {
 	if (!st) {
@@ -84,42 +81,4 @@ const char *gpio_edge_str(gpio_edge_t edge)
 	default:
 		return "none";
 	}
-}
-
-int gpio_event_build_payload(char *buf, size_t buf_len, const char *device_id,
-			     const char *device_type, const char *pin_alias, int state,
-			     gpio_edge_t edge, int64_t uptime_ms, const char *run_id)
-{
-	if (!buf || buf_len == 0 || !pin_alias || !device_id || !device_type) {
-		return -1;
-	}
-
-	const char *edge_str = gpio_edge_str(edge);
-	int len = 0;
-	/* timestamp uses uptime_ms until we have a real epoch source */
-
-	if (run_id && run_id[0] != '\0') {
-		len = snprintf(buf, buf_len,
-			       "{\"schema_version\":\"1.0\",\"device_id\":\"%s\","
-			       "\"device_type\":\"%s\",\"timestamp\":%lld,"
-			       "\"event_type\":\"state_change\",\"location\":null,"
-			       "\"run_id\":\"%s\",\"data\":{\"gpio\":{\"pin\":\"%s\","
-			       "\"state\":%d,\"edge\":\"%s\",\"uptime_ms\":%lld}}}",
-			       device_id, device_type, (long long)uptime_ms, run_id,
-			       pin_alias, state, edge_str, (long long)uptime_ms);
-	} else {
-		len = snprintf(buf, buf_len,
-			       "{\"schema_version\":\"1.0\",\"device_id\":\"%s\","
-			       "\"device_type\":\"%s\",\"timestamp\":%lld,"
-			       "\"event_type\":\"state_change\",\"location\":null,"
-			       "\"run_id\":null,\"data\":{\"gpio\":{\"pin\":\"%s\","
-			       "\"state\":%d,\"edge\":\"%s\",\"uptime_ms\":%lld}}}",
-			       device_id, device_type, (long long)uptime_ms, pin_alias,
-			       state, edge_str, (long long)uptime_ms);
-	}
-
-	if (len < 0 || (size_t)len >= buf_len) {
-		return -1;
-	}
-	return len;
 }

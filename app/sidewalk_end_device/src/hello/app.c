@@ -10,7 +10,6 @@
 #include <app_ble_config.h>
 #include <app_subGHz_config.h>
 #include <sid_hal_reset_ifc.h>
-#include <sid_hal_memory_ifc.h>
 #include <stdbool.h>
 #ifdef CONFIG_SIDEWALK_FILE_TRANSFER_DFU
 #include <sbdt/dfu_file_transfer.h>
@@ -37,6 +36,9 @@
 #include <string.h>
 #include "gpio_event.h"
 #include "evse.h"
+#include "sidewalk_msg.h"
+#include "telemetry/telemetry_evse.h"
+#include "telemetry/telemetry_gpio.h"
 #include "time_sync.h"
 
 #include <json_printer/sidTypes2Json.h>
@@ -116,18 +118,6 @@ static int64_t app_get_timestamp_ms(void)
 	return time_sync_get_timestamp_ms(uptime_ms);
 }
 
-static void free_sid_gpio_event_ctx(void *ctx)
-{
-	sidewalk_msg_t *msg = (sidewalk_msg_t *)ctx;
-	if (msg == NULL) {
-		return;
-	}
-	if (msg->msg.data) {
-		sid_hal_free(msg->msg.data);
-	}
-	sid_hal_free(msg);
-}
-
 static void app_gpio_send_event(const char *pin_alias, int state, gpio_edge_t edge)
 {
 	if (!app_sidewalk_ready) {
@@ -137,9 +127,9 @@ static void app_gpio_send_event(const char *pin_alias, int state, gpio_edge_t ed
 
 	int64_t timestamp_ms = app_get_timestamp_ms();
 	char payload[256];
-	int len = gpio_event_build_payload(payload, sizeof(payload), APP_DEVICE_ID,
-					   APP_DEVICE_TYPE, pin_alias, state, edge,
-					   timestamp_ms, app_gpio_run_id);
+	int len = telemetry_build_gpio_payload(payload, sizeof(payload), APP_DEVICE_ID,
+					       APP_DEVICE_TYPE, pin_alias, state, edge,
+					       timestamp_ms, app_gpio_run_id);
 	if (len < 0) {
 		LOG_ERR("GPIO payload format failed");
 		return;
@@ -148,29 +138,8 @@ static void app_gpio_send_event(const char *pin_alias, int state, gpio_edge_t ed
 	LOG_INF("GPIO event: %s state=%d edge=%s timestamp_ms=%" PRId64, pin_alias, state,
 		gpio_edge_str(edge), timestamp_ms);
 
-	sidewalk_msg_t *evt = sid_hal_malloc(sizeof(sidewalk_msg_t));
-	if (!evt) {
-		LOG_ERR("Failed to alloc gpio msg context");
-		return;
-	}
-	memset(evt, 0x0, sizeof(*evt));
-
-	evt->msg.size = (size_t)len;
-	evt->msg.data = sid_hal_malloc(evt->msg.size);
-	if (!evt->msg.data) {
-		sid_hal_free(evt);
-		LOG_ERR("Failed to alloc gpio msg data");
-		return;
-	}
-	memcpy(evt->msg.data, payload, evt->msg.size);
-
-	evt->desc.type = SID_MSG_TYPE_NOTIFY;
-	evt->desc.link_type = SID_LINK_TYPE_ANY;
-	evt->desc.link_mode = SID_LINK_MODE_CLOUD;
-
-	int err = sidewalk_event_send(sidewalk_event_send_msg, evt, free_sid_gpio_event_ctx);
+	int err = sidewalk_send_notify_json(payload, (size_t)len);
 	if (err) {
-		free_sid_gpio_event_ctx(evt);
 		LOG_ERR("Sidewalk send: err %d", err);
 	} else {
 #if defined(CONFIG_STATE_NOTIFIER)
@@ -181,11 +150,6 @@ static void app_gpio_send_event(const char *pin_alias, int state, gpio_edge_t ed
 }
 
 #if defined(CONFIG_SID_END_DEVICE_EVSE_ENABLED)
-static void free_sid_evse_event_ctx(void *ctx)
-{
-	free_sid_gpio_event_ctx(ctx);
-}
-
 static void app_evse_send_event(const struct evse_event *evt, int64_t timestamp_ms)
 {
 	if (!app_sidewalk_ready) {
@@ -194,8 +158,8 @@ static void app_evse_send_event(const struct evse_event *evt, int64_t timestamp_
 	}
 
 	char payload[320];
-	int len = evse_build_payload(payload, sizeof(payload), APP_DEVICE_ID, APP_DEVICE_TYPE,
-				     timestamp_ms, evt);
+	int len = telemetry_build_evse_payload(payload, sizeof(payload), APP_DEVICE_ID,
+					       APP_DEVICE_TYPE, timestamp_ms, evt);
 	if (len < 0) {
 		LOG_ERR("EVSE payload format failed");
 		return;
@@ -203,31 +167,11 @@ static void app_evse_send_event(const struct evse_event *evt, int64_t timestamp_
 
 	LOG_INF("EVSE event: pilot=%c prox=%d duty=%.2f current=%.2fA energy=%.4f",
 		evse_pilot_state_to_char(evt->pilot_state), evt->proximity_detected,
-		evt->pwm_duty_cycle, evt->current_draw_a, evt->energy_kwh);
+		(double)evt->pwm_duty_cycle, (double)evt->current_draw_a,
+		(double)evt->energy_kwh);
 
-	sidewalk_msg_t *msg = sid_hal_malloc(sizeof(sidewalk_msg_t));
-	if (!msg) {
-		LOG_ERR("Failed to alloc evse msg context");
-		return;
-	}
-	memset(msg, 0x0, sizeof(*msg));
-
-	msg->msg.size = (size_t)len;
-	msg->msg.data = sid_hal_malloc(msg->msg.size);
-	if (!msg->msg.data) {
-		sid_hal_free(msg);
-		LOG_ERR("Failed to alloc evse msg data");
-		return;
-	}
-	memcpy(msg->msg.data, payload, msg->msg.size);
-
-	msg->desc.type = SID_MSG_TYPE_NOTIFY;
-	msg->desc.link_type = SID_LINK_TYPE_ANY;
-	msg->desc.link_mode = SID_LINK_MODE_CLOUD;
-
-	int err = sidewalk_event_send(sidewalk_event_send_msg, msg, free_sid_evse_event_ctx);
+	int err = sidewalk_send_notify_json(payload, (size_t)len);
 	if (err) {
-		free_sid_evse_event_ctx(msg);
 		LOG_ERR("Sidewalk send: err %d", err);
 	}
 }
@@ -373,18 +317,6 @@ static void on_sidewalk_event(bool in_isr, void *context)
 	};
 }
 
-static void free_sid_echo_event_ctx(void *ctx)
-{
-	sidewalk_msg_t *echo = (sidewalk_msg_t *)ctx;
-	if (echo == NULL) {
-		return;
-	}
-	if (echo->msg.data) {
-		sid_hal_free(echo->msg.data);
-	}
-	sid_hal_free(echo);
-}
-
 static void app_handle_time_sync(const struct sid_msg *msg)
 {
 	if (!msg || !msg->data || msg->size == 0) {
@@ -426,32 +358,16 @@ static void on_sidewalk_msg_received(const struct sid_msg_desc *msg_desc, const 
 #ifdef CONFIG_SID_END_DEVICE_ECHO_MSGS
 	if (msg_desc->type == SID_MSG_TYPE_GET || msg_desc->type == SID_MSG_TYPE_SET) {
 		LOG_INF("Send echo message");
-		sidewalk_msg_t *echo = sid_hal_malloc(sizeof(sidewalk_msg_t));
-		if (!echo) {
-			LOG_ERR("Failed to allocate event context for echo message");
-			return;
-		}
-		memset(echo, 0x0, sizeof(*echo));
-		echo->msg.size = msg->size;
-		echo->msg.data = sid_hal_malloc(echo->msg.size);
-		if (!echo->msg.data) {
-			LOG_ERR("Failed to allocate memory for message echo data");
-			sid_hal_free(echo);
-			return;
-		}
-		memcpy(echo->msg.data, msg->data, echo->msg.size);
+		struct sid_msg_desc desc = {
+			.type = (msg_desc->type == SID_MSG_TYPE_GET) ? SID_MSG_TYPE_RESPONSE :
+								     SID_MSG_TYPE_NOTIFY,
+			.id = (msg_desc->type == SID_MSG_TYPE_GET) ? msg_desc->id : msg_desc->id + 1,
+			.link_type = SID_LINK_TYPE_ANY,
+			.link_mode = SID_LINK_MODE_CLOUD,
+		};
 
-		echo->desc.type = (msg_desc->type == SID_MSG_TYPE_GET) ? SID_MSG_TYPE_RESPONSE :
-									 SID_MSG_TYPE_NOTIFY;
-		echo->desc.id =
-			(msg_desc->type == SID_MSG_TYPE_GET) ? msg_desc->id : msg_desc->id + 1;
-		echo->desc.link_type = SID_LINK_TYPE_ANY;
-		echo->desc.link_mode = SID_LINK_MODE_CLOUD;
-
-		int err =
-			sidewalk_event_send(sidewalk_event_send_msg, echo, free_sid_echo_event_ctx);
+		int err = sidewalk_send_msg_copy(&desc, msg->data, msg->size);
 		if (err) {
-			free_sid_echo_event_ctx(echo);
 			LOG_ERR("Send event err %d", err);
 		} else {
 #if defined(CONFIG_STATE_NOTIFIER)
@@ -574,47 +490,14 @@ static void on_sidewalk_status_changed(const struct sid_status *status, void *co
 		}
 	}
 }
-static void free_sid_hello_event_ctx(void *ctx)
-{
-	sidewalk_msg_t *hello = (sidewalk_msg_t *)ctx;
-	if (hello == NULL) {
-		return;
-	}
-	if (hello->msg.data) {
-		sid_hal_free(hello->msg.data);
-	}
-	sid_hal_free(hello);
-}
-
 static void app_btn_send_msg(uint32_t unused)
 {
 	ARG_UNUSED(unused);
 
 	LOG_INF("Send hello message");
 	const char payload[] = "hello";
-	sidewalk_msg_t *hello = sid_hal_malloc(sizeof(sidewalk_msg_t));
-	if (!hello) {
-		LOG_ERR("Failed to alloc memory for message context");
-		return;
-	}
-	memset(hello, 0x0, sizeof(*hello));
-
-	hello->msg.size = sizeof(payload);
-	hello->msg.data = sid_hal_malloc(hello->msg.size);
-	if (!hello->msg.data) {
-		sid_hal_free(hello);
-		LOG_ERR("Failed to allocate memory for message data");
-		return;
-	}
-	memcpy(hello->msg.data, payload, hello->msg.size);
-
-	hello->desc.type = SID_MSG_TYPE_NOTIFY;
-	hello->desc.link_type = SID_LINK_TYPE_ANY;
-	hello->desc.link_mode = SID_LINK_MODE_CLOUD;
-
-	int err = sidewalk_event_send(sidewalk_event_send_msg, hello, free_sid_hello_event_ctx);
+	int err = sidewalk_send_notify_json(payload, sizeof(payload));
 	if (err) {
-		free_sid_hello_event_ctx(hello);
 		LOG_ERR("Send event err %d", err);
 	} else {
 #if defined(CONFIG_STATE_NOTIFIER)

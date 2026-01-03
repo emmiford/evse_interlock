@@ -2,8 +2,6 @@
  * GPIO event unit tests (host)
  */
 #include <zephyr/ztest.h>
-#include <string.h>
-
 #include "gpio_event.h"
 
 ZTEST(gpio_event, test_debounce)
@@ -53,32 +51,6 @@ ZTEST(gpio_event, test_no_spam_same_state)
 	(void)gpio_event_update(&st, 1, 0, &changed);
 	zassert_equal(gpio_event_update(&st, 1, 1, &changed), GPIO_EDGE_NONE, NULL);
 	zassert_false(changed, NULL);
-}
-
-ZTEST(gpio_event, test_payload_builder)
-{
-	char buf[256];
-	int len = gpio_event_build_payload(buf, sizeof(buf), "dev123", "evse",
-					   "extinput0", 1, GPIO_EDGE_RISING, 1234,
-					   "abcd1234");
-	zassert_true(len > 0, NULL);
-	zassert_not_null(strstr(buf, "\"schema_version\":\"1.0\""), NULL);
-	zassert_not_null(strstr(buf, "\"device_id\":\"dev123\""), NULL);
-	zassert_not_null(strstr(buf, "\"device_type\":\"evse\""), NULL);
-	zassert_not_null(strstr(buf, "\"event_type\":\"state_change\""), NULL);
-	zassert_not_null(strstr(buf, "\"pin\":\"extinput0\""), NULL);
-	zassert_not_null(strstr(buf, "\"state\":1"), NULL);
-	zassert_not_null(strstr(buf, "\"edge\":\"rising\""), NULL);
-	zassert_not_null(strstr(buf, "\"run_id\":\"abcd1234\""), NULL);
-}
-
-ZTEST(gpio_event, test_payload_bounds)
-{
-	char buf[16];
-	int len = gpio_event_build_payload(buf, sizeof(buf), "dev123", "evse",
-					   "extinput0", 1, GPIO_EDGE_RISING, 1234,
-					   "abcd1234");
-	zassert_equal(len, -1, NULL);
 }
 
 ZTEST_SUITE(gpio_event, NULL, NULL, NULL, NULL, NULL);
