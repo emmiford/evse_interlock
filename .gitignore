@@ -101,6 +101,13 @@ dkms.conf
 build/
 build-*/
 build-tests/
+bootloader/
+modules/
+test/
+
+# Local output artifacts
+aws_setup_output.txt
+bash_output.txt
 
 # Python/env tooling
 .venv/
