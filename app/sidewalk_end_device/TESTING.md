@@ -11,10 +11,21 @@ Note: RAK4631 DTS has no `gpio-keys`/`button0` aliases; reset is wired to nRESET
 
 ## Test Plan (Pragmatic)
 
+| Test Type | Runs On | Purpose |
+|---------|--------|--------|
+| Unit | macOS/Linux | Logic correctness |
+| Zephyr Integration | Linux only | OS + drivers |
+| E2E | Hardware | System validation |
+
 ### Unit tests (host)
 - Focus: debounce, edge detection, telemetry payload formatting, no-spam behavior.
 - Command:
-  - `tools/test_unit.sh`
+  - `tools/test_unit_host.sh`
+
+### Zephyr integration tests (native_posix)
+- Focus: Zephyr build + ztest execution for host integration.
+- Command:
+  - `tools/test_zephyr_linux.sh`
 
 ### HIL tests (device + RTT)
 - Focus: deterministic GPIO events + Sidewalk send logs.
@@ -62,7 +73,12 @@ Note: RAK4631 DTS has no `gpio-keys`/`button0` aliases; reset is wired to nRESET
 
 ### Unit
 ```
-tools/test_unit.sh
+tools/test_unit_host.sh
+```
+
+### Zephyr integration (Linux)
+```
+tools/test_zephyr_linux.sh
 ```
 
 ### HIL
@@ -81,6 +97,7 @@ aws iot describe-endpoint --endpoint-type iot:Data-ATS --region us-east-1
 ```
 
 ## Where to look when failures happen
-- Unit tests: `build-tests/gpio_event/zephyr/`, `build-tests/telemetry/zephyr/`.
+- Unit tests: `build-tests/host/`.
+- Zephyr tests: `build-tests/gpio_event/zephyr/`, `build-tests/telemetry/zephyr/`.
 - HIL logs: `build/hil_gpio_rtt.log`.
 - E2E logs: `build/e2e_rtt.log`.

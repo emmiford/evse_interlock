@@ -88,7 +88,7 @@
   - `sidewalk/samples/sid_end_device/tests/gpio_event/prj.conf`
   - `sidewalk/samples/sid_end_device/tests/gpio_event/src/main.c`
   - `sidewalk/samples/sid_end_device/TESTING.md`
-  - `tools/test_unit.sh`
+  - `tools/test_unit_host.sh`
   - `tools/test_hil_gpio.sh`
   - `tools/test_hil_gpio.py`
   - `tools/capture_rtt_run_id.py`
@@ -137,7 +137,7 @@
   - Static partition layout for RAK4631 build (created earlier in session).
 - `/Users/jan/dev/sidewalk-workspace/tools/sidewalk_build_flash.sh`
   - Updated build/flash/provision flow and probe handling (created/edited earlier).
-- `/Users/jan/dev/sidewalk-workspace/tools/test_unit.sh`
+- `/Users/jan/dev/sidewalk-workspace/tools/test_unit_host.sh`
   - Host unit-test runner (west native_posix).
 - `/Users/jan/dev/sidewalk-workspace/tools/test_hil_gpio.sh`
   - HIL build/flash + RTT assert runner.
