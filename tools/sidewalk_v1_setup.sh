@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
+SCRIPT_NAME="$(basename "$0")"
+trap 'echo "FAIL: ${SCRIPT_NAME}" >&2' ERR
 
 REGION="${AWS_REGION:-us-east-1}"
 ACCOUNT_ID="$(aws sts get-caller-identity --query Account --output text)"
@@ -185,3 +187,4 @@ aws --region "$REGION" athena start-query-execution \
   >/dev/null
 
 echo "== Setup complete =="
+echo "PASS: ${SCRIPT_NAME}"

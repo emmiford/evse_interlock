@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
+SCRIPT_NAME="$(basename "$0")"
+trap 'echo "FAIL: ${SCRIPT_NAME}" >&2' ERR
 
 WORKSPACE="${WORKSPACE:-$HOME/dev/sidewalk-workspace}"
 BUILD_DIR="${BUILD_DIR:-$WORKSPACE/build}"
@@ -59,3 +61,4 @@ pyocd flash -t nrf52840 ${pyocd_probe_args[@]:-} "$PROVISION_DIR/rak4631_mfg.hex
 
 echo "=== Done ==="
 echo "RTT: pyocd rtt -t nrf52840 ${pyocd_probe_args[*]:-}"
+echo "PASS: ${SCRIPT_NAME}"

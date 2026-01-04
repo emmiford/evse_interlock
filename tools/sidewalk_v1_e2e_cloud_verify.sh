@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
+SCRIPT_NAME="$(basename "$0")"
+trap 'echo "FAIL: ${SCRIPT_NAME}" >&2' ERR
 
 REGION="${AWS_REGION:-us-east-1}"
 PROJECT_PREFIX="${PROJECT_PREFIX:-sidewalk-v1}"
@@ -23,3 +25,4 @@ echo "== Step 3: idempotency check =="
 bash tools/e2e_idempotency_check.sh
 
 echo "== E2E cloud verification complete =="
+echo "PASS: ${SCRIPT_NAME}"

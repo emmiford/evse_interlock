@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
+SCRIPT_NAME="$(basename "$0")"
+trap 'echo "FAIL: ${SCRIPT_NAME}" >&2' ERR
 
 ROOT_DIR="/Users/jan/dev/sidewalk-workspace"
 BUILD_DIR="${ROOT_DIR}/build"
@@ -42,3 +44,4 @@ python3 "${ROOT_DIR}/tools/e2e_verify_dynamodb.py" \
   --run-id "${RUN_ID}" \
   --region "${REGION}" \
   --table "${PROJECT_PREFIX}-device_events_v2"
+echo "PASS: ${SCRIPT_NAME}"

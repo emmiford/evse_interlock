@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
+SCRIPT_NAME="$(basename "$0")"
+trap 'echo "FAIL: ${SCRIPT_NAME}" >&2' ERR
 
 ROOT_DIR="/Users/jan/dev/sidewalk-workspace"
 BUILD_DIR="${ROOT_DIR}/build"
@@ -25,3 +27,4 @@ west flash --runner pyocd --build-dir "${BUILD_DIR}" -- \
   --target nrf52840 --dev-id "${PROBE_ID}"
 
 python3 "${ROOT_DIR}/tools/test_hil_gpio.py" --probe "${PROBE_ID}" --timeout 40 --outfile "${LOG_FILE}" "${EXTRA_ARGS[@]}"
+echo "PASS: ${SCRIPT_NAME}"

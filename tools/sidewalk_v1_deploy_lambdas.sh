@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
+SCRIPT_NAME="$(basename "$0")"
+trap 'echo "FAIL: ${SCRIPT_NAME}" >&2' ERR
 
 REGION="${AWS_REGION:-us-east-1}"
 ACCOUNT_ID="$(aws sts get-caller-identity --query Account --output text)"
@@ -62,3 +64,4 @@ deploy_fn "${PROJECT_PREFIX}-debug-query" tools/sidewalk_v1_lambdas/debug_query.
 deploy_fn "${PROJECT_PREFIX}-energy-aggregate" tools/sidewalk_v1_lambdas/energy_aggregate.py energy_aggregate.lambda_handler
 
 echo "== Lambda deploy complete =="
+echo "PASS: ${SCRIPT_NAME}"

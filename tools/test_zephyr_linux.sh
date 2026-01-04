@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
+SCRIPT_NAME="$(basename "$0")"
+trap 'echo "FAIL: ${SCRIPT_NAME}" >&2' ERR
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BOARD="${BOARD:-native_posix}"
@@ -22,3 +24,4 @@ for test_name in "${TESTS[@]}"; do
   fi
 done
 
+echo "PASS: ${SCRIPT_NAME}"
