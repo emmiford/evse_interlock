@@ -7,6 +7,7 @@ target_sources(app PRIVATE
 	src/main.c
 	../../src/gpio_event.c
 	../../src/safety_gate.c
+	../../src/time_sync.c
 )
 
 target_include_directories(app PRIVATE

@@ -5,6 +5,7 @@
 #include <zephyr/sys/util.h>
 
 #include "safety_gate.h"
+#include "time_sync.h"
 
 #if IS_ENABLED(CONFIG_LOG)
 #error "CONFIG_LOG must be disabled for safety_gate tests"
@@ -72,6 +73,24 @@ ZTEST(safety_gate, test_invalid_debounce)
 	safety_gate_init(&gate, 0);
 	zassert_false(safety_gate_is_ev_allowed(&gate), NULL);
 	zassert_true(safety_gate_has_fault(&gate, SAFETY_FAULT_DEBOUNCE_INVALID), NULL);
+}
+
+ZTEST(safety_gate, test_time_sync_backward_clamp)
+{
+	int64_t ts;
+
+	time_sync_init();
+	ts = time_sync_get_timestamp_ms(1000);
+	zassert_equal(ts, 1000, NULL);
+	zassert_false(time_sync_time_anomaly(), NULL);
+
+	time_sync_apply_epoch_ms(500, 1000);
+	ts = time_sync_get_timestamp_ms(1100);
+	zassert_equal(ts, 1100, NULL);
+	zassert_true(time_sync_time_anomaly(), NULL);
+
+	ts = time_sync_get_timestamp_ms(1200);
+	zassert_equal(ts, 1200, NULL);
 }
 
 ZTEST_SUITE(safety_gate, NULL, NULL, NULL, NULL, NULL);

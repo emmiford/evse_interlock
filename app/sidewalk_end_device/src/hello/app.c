@@ -94,6 +94,8 @@ static struct k_work_delayable app_evse_work;
 static struct k_timer app_evse_timer;
 #endif
 
+static uint32_t app_event_seq;
+
 static int app_gpio_read_state(void)
 {
 #if defined(CONFIG_SID_END_DEVICE_GPIO_SIMULATOR)
@@ -119,6 +121,18 @@ static int64_t app_get_timestamp_ms(void)
 	return time_sync_get_timestamp_ms(uptime_ms);
 }
 
+static void app_next_event_id(char *buf, size_t buf_len)
+{
+	uint32_t seq = ++app_event_seq;
+	uint32_t rand = sys_rand32_get();
+
+	if (app_gpio_run_id && app_gpio_run_id[0] != '\0') {
+		snprintf(buf, buf_len, "%s-%08x", app_gpio_run_id, seq);
+	} else {
+		snprintf(buf, buf_len, "%08x%08x", rand, seq);
+	}
+}
+
 static void app_gpio_send_event(const char *pin_alias, int state, gpio_edge_t edge)
 {
 	if (!app_sidewalk_ready) {
@@ -127,10 +141,14 @@ static void app_gpio_send_event(const char *pin_alias, int state, gpio_edge_t ed
 	}
 
 	int64_t timestamp_ms = app_get_timestamp_ms();
-	char payload[256];
-	int len = telemetry_build_gpio_payload(payload, sizeof(payload), APP_DEVICE_ID,
-					       APP_DEVICE_TYPE, pin_alias, state, edge,
-					       timestamp_ms, app_gpio_run_id);
+	bool time_anomaly = time_sync_time_anomaly();
+	char event_id[32];
+	char payload[384];
+	app_next_event_id(event_id, sizeof(event_id));
+	int len = telemetry_build_gpio_payload_ex(payload, sizeof(payload), APP_DEVICE_ID,
+						  APP_DEVICE_TYPE, pin_alias, state, edge,
+						  timestamp_ms, app_gpio_run_id, event_id,
+						  time_anomaly);
 	if (len < 0) {
 		LOG_ERR("GPIO payload format failed");
 		return;
@@ -158,9 +176,12 @@ static void app_evse_send_event(const struct evse_event *evt, int64_t timestamp_
 		return;
 	}
 
+	char event_id[32];
 	char payload[384];
-	int len = telemetry_build_evse_payload(payload, sizeof(payload), APP_DEVICE_ID,
-					       APP_DEVICE_TYPE, timestamp_ms, evt);
+	app_next_event_id(event_id, sizeof(event_id));
+	int len = telemetry_build_evse_payload_ex(payload, sizeof(payload), APP_DEVICE_ID,
+						  APP_DEVICE_TYPE, timestamp_ms, evt, event_id,
+						  time_sync_time_anomaly());
 	if (len < 0) {
 		LOG_ERR("EVSE payload format failed");
 		return;

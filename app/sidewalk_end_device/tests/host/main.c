@@ -8,6 +8,7 @@
 #include "safety_gate.h"
 #include "telemetry/telemetry_gpio.h"
 #include "telemetry/telemetry_evse.h"
+#include "time_sync.h"
 
 void test_telemetry_required_fields(void);
 void test_telemetry_golden_fixtures(void);
@@ -29,16 +30,17 @@ static void test_gpio_debounce(void)
 
 static void test_gpio_payloads(void)
 {
-	char buf[256];
+	char buf[384];
 	int len = telemetry_build_gpio_payload(buf, sizeof(buf), "dev123", "evse",
 					       "extinput0", 1, GPIO_EDGE_RISING, 1234,
-					       "abcd1234");
+					       "abcd1234", "evt-1");
 	assert(len > 0);
 	assert(strstr(buf, "\"edge\":\"rising\"") != NULL);
 	assert(strstr(buf, "\"run_id\":\"abcd1234\"") != NULL);
 
 	len = telemetry_build_gpio_payload(buf, sizeof(buf), "dev123", "evse",
-					   "extinput0", 0, GPIO_EDGE_FALLING, 4321, NULL);
+					   "extinput0", 0, GPIO_EDGE_FALLING, 4321, NULL,
+					   "evt-2");
 	assert(len > 0);
 	assert(strstr(buf, "\"edge\":\"falling\"") != NULL);
 	assert(strstr(buf, "\"run_id\":null") != NULL);
@@ -58,7 +60,8 @@ static void test_evse_payload(void)
 		.session_id = "session-1",
 	};
 
-	int len = telemetry_build_evse_payload(buf, sizeof(buf), "dev123", "evse", 9876, &evt);
+	int len = telemetry_build_evse_payload(buf, sizeof(buf), "dev123", "evse", 9876, &evt,
+					       "evt-3");
 	assert(len > 0);
 	assert(strstr(buf, "\"pilot_state\":\"B\"") != NULL);
 	assert(strstr(buf, "\"pwm_duty_cycle\":12.50") != NULL);
@@ -159,6 +162,24 @@ static void test_safety_null_pointers(void)
 	assert(safety_gate_has_fault(&gate, SAFETY_FAULT_INVALID_INPUT));
 }
 
+static void test_time_sync_backward_clamp(void)
+{
+	int64_t ts;
+
+	time_sync_init();
+	ts = time_sync_get_timestamp_ms(1000);
+	assert(ts == 1000);
+	assert(!time_sync_time_anomaly());
+
+	time_sync_apply_epoch_ms(500, 1000);
+	ts = time_sync_get_timestamp_ms(1100);
+	assert(ts == 1100);
+	assert(time_sync_time_anomaly());
+
+	ts = time_sync_get_timestamp_ms(1200);
+	assert(ts == 1200);
+}
+
 int main(void)
 {
 	test_gpio_debounce();
@@ -172,6 +193,7 @@ int main(void)
 	test_safety_no_time_sync();
 	test_safety_invalid_debounce();
 	test_safety_null_pointers();
+	test_time_sync_backward_clamp();
 	test_telemetry_required_fields();
 	test_telemetry_golden_fixtures();
 	return 0;

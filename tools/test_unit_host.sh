@@ -12,6 +12,7 @@ mkdir -p "${BUILD_DIR}"
 cc -std=c11 -Wall -Wextra -I"${SRC_DIR}/include" -I"${SRC_DIR}/src" \
   "${SRC_DIR}/src/gpio_event.c" \
   "${SRC_DIR}/src/safety_gate.c" \
+  "${SRC_DIR}/src/time_sync.c" \
   "${SRC_DIR}/src/telemetry/telemetry_gpio.c" \
   "${SRC_DIR}/src/telemetry/telemetry_evse.c" \
   "${SRC_DIR}/tests/host/main.c" \
