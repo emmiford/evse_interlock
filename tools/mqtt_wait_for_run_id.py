@@ -29,6 +29,7 @@ def main():
     parser.add_argument("--timeout", type=int, default=60)
     parser.add_argument("--region", default=os.environ.get("AWS_REGION", "us-east-1"))
     parser.add_argument("--endpoint", default=os.environ.get("AWS_IOT_ENDPOINT"))
+    parser.add_argument("--outfile", default=None)
     args = parser.parse_args()
 
     try:
@@ -56,10 +57,10 @@ def main():
     def on_message_received(topic, payload, dup, qos, retain, **kwargs):
         text = payload.decode("utf-8", errors="replace")
         if args.run_id in text:
-            print("PASS: run_id received")
             received["ok"] = True
+            received["payload"] = text
 
-    received = {"ok": False}
+    received = {"ok": False, "payload": None}
     connection.connect().result()
     connection.subscribe(args.topic, mqtt.QoS.AT_LEAST_ONCE, on_message_received).result()
 
@@ -74,6 +75,10 @@ def main():
     if not received["ok"]:
         print("FAIL: run_id not received within timeout", file=sys.stderr)
         return 1
+    if args.outfile:
+        with open(args.outfile, "w", encoding="utf-8") as out:
+            out.write(received["payload"] or "")
+    print("PASS: run_id received")
     return 0
 
 

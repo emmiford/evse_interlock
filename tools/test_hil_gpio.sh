@@ -6,6 +6,16 @@ BUILD_DIR="${ROOT_DIR}/build"
 APP_DIR="${ROOT_DIR}/sidewalk/samples/sid_end_device"
 PROBE_ID="${PROBE_ID:-0700000100120036470000124e544634a5a5a5a597969908}"
 LOG_FILE="${ROOT_DIR}/build/hil_gpio_rtt.log"
+HIL_MODE="${HIL_MODE:-basic}"
+EXPECTED_TRANSITIONS="${EXPECTED_TRANSITIONS:-6}"
+EXTRA_ARGS=()
+
+if [[ "${HIL_MODE}" == "signal" ]]; then
+  EXTRA_ARGS+=(--mode signal --expected-transitions "${EXPECTED_TRANSITIONS}")
+fi
+if [[ "${HIL_MODE}" == "safety" ]]; then
+  EXTRA_ARGS+=(--mode safety --require-ac-asserted)
+fi
 
 west build -p always -d "${BUILD_DIR}" -b rak4631 "${APP_DIR}" -- \
   -DOVERLAY_CONFIG="overlay-hello.conf;overlay-gpio-test.conf" \
@@ -14,4 +24,4 @@ west build -p always -d "${BUILD_DIR}" -b rak4631 "${APP_DIR}" -- \
 west flash --runner pyocd --build-dir "${BUILD_DIR}" -- \
   --target nrf52840 --dev-id "${PROBE_ID}"
 
-python3 "${ROOT_DIR}/tools/test_hil_gpio.py" --probe "${PROBE_ID}" --timeout 40 --outfile "${LOG_FILE}"
+python3 "${ROOT_DIR}/tools/test_hil_gpio.py" --probe "${PROBE_ID}" --timeout 40 --outfile "${LOG_FILE}" "${EXTRA_ARGS[@]}"
