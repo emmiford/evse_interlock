@@ -88,6 +88,9 @@ Layer 0C -- HIL Safety Invariant Verification:
   - AC input held ON => EV output never enables
   - After reset => EV OFF until AC confirmed OFF and stable
   - No log messages indicate EV allow transition while AC asserted
+  - Optional modes:
+    - `HIL_MODE=safety` enforces asserted input and no deasserted events
+    - `HIL_MODE=signal` validates transition counts from loopback jig
 
 ### 1. Unit Tests (Host)
 
@@ -115,6 +118,9 @@ Layer 0C -- HIL Safety Invariant Verification:
   - run_id appears in RTT logs
   - GPIO toggles => rising/falling edges logged
   - Sidewalk send returns ok
+  - Modes:
+    - `HIL_MODE=safety` for asserted-input safety checks
+    - `HIL_MODE=signal` for loopback transition counts
 
 ### 4. End-to-End (AWS)
 
@@ -123,8 +129,12 @@ Layer 0C -- HIL Safety Invariant Verification:
 - Acceptance checks:
   - MQTT receives message on `sidewalk/#`
   - Payload includes required fields
-  - DynamoDB device_events table receives records
+  - DynamoDB device_events_v2 table receives records
   - TTL in epoch seconds (not milliseconds)
+  - Idempotency check rejects duplicate event_id
+- Support scripts:
+  - `tools/e2e_verify_dynamodb.py` validates DynamoDB record fields + TTL
+  - `tools/e2e_idempotency_check.sh` validates conditional write behavior
 
 ## Technical Requirements
 
@@ -134,6 +144,7 @@ Layer 0C -- HIL Safety Invariant Verification:
 - Every PR (CI): `tools/test_zephyr_linux.sh` (Layer 0B included)
 - Before release/hardware change: `tools/test_hil_gpio.sh`
 - Before demo/deployment: `tools/test_e2e_sidewalk.sh`
+- Cloud-only checks: `tools/sidewalk_v1_e2e_cloud_verify.sh`
 
 ### JSON Schema Stability
 
@@ -196,4 +207,3 @@ Backward time handling strategy:
 1. Device model consistency: TESTING.md references RAK4631 vs RAK4630
 2. run_id format enforcement vs current behavior
 3. DynamoDB write path (IoT Rule/Lambda names)
-

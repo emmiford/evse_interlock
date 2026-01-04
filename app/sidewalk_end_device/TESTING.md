@@ -31,6 +31,9 @@ Note: RAK4631 DTS has no `gpio-keys`/`button0` aliases; reset is wired to nRESET
 - Focus: deterministic GPIO events + Sidewalk send logs.
 - Command:
   - `tools/test_hil_gpio.sh`
+- Modes:
+  - `HIL_MODE=safety` to enforce asserted input (no deasserted events)
+  - `HIL_MODE=signal` to validate loopback transition counts
 - Expected output (RTT):
   - `E2E run_id: <id>`
   - `GPIO event: extinput0 state=<0/1> edge=<rising|falling> uptime_ms=<...>`
@@ -47,6 +50,8 @@ Note: RAK4631 DTS has no `gpio-keys`/`button0` aliases; reset is wired to nRESET
 - Optional: `AWS_REGION` (defaults to `us-east-1`), `AWS_IOT_ENDPOINT` to override endpoint lookup.
   - Payloads include `schema_version`, `device_id`, `device_type`, `timestamp`, and `data.gpio`.
   - `timestamp` uses uptime until a time sync downlink is received.
+  - DynamoDB verification is done via `tools/e2e_verify_dynamodb.py`.
+  - Idempotency check uses `tools/e2e_idempotency_check.sh`.
 
 ### Time sync (optional)
 - Send a downlink payload: `{"cmd":"time_sync","epoch_ms":1704067200000}`
