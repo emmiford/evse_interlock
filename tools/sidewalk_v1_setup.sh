@@ -11,6 +11,7 @@ OUTPUT_FILE="${OUTPUT_FILE:-aws_setup_output.txt}"
 exec >"$OUTPUT_FILE" 2>&1
 
 DEVICE_EVENTS_TABLE="${PROJECT_PREFIX}-device_events"
+DEDUPE_TABLE="${PROJECT_PREFIX}-device_events_dedupe"
 DEVICE_CONFIG_TABLE="${PROJECT_PREFIX}-device_config"
 ARCHIVE_BUCKET="${PROJECT_PREFIX}-device-events-archive-${ACCOUNT_ID}-${REGION}"
 
@@ -30,6 +31,17 @@ aws --region "$REGION" dynamodb create-table \
 aws --region "$REGION" dynamodb update-time-to-live \
   --table-name "$DEVICE_EVENTS_TABLE" \
   --time-to-live-specification "Enabled=true,AttributeName=ttl" \
+  || true
+
+aws --region "$REGION" dynamodb create-table \
+  --table-name "$DEDUPE_TABLE" \
+  --attribute-definitions \
+    AttributeName=device_id,AttributeType=S \
+    AttributeName=event_id,AttributeType=S \
+  --key-schema \
+    AttributeName=device_id,KeyType=HASH \
+    AttributeName=event_id,KeyType=RANGE \
+  --billing-mode PAY_PER_REQUEST \
   || true
 
 aws --region "$REGION" dynamodb create-table \
@@ -89,15 +101,53 @@ echo "== Create IoT Rule (sidewalk/# -> DynamoDB) =="
 # IoT Rule names must match ^[a-zA-Z0-9_]+$
 RULE_PREFIX="${PROJECT_PREFIX//-/_}"
 RULE_NAME="${RULE_PREFIX}_sidewalk_events_to_dynamodb"
+INGEST_FN="${PROJECT_PREFIX}-ingest-device-events"
+INGEST_ROLE="${PROJECT_PREFIX}-ingest-lambda-role"
+
+aws --region "$REGION" iam create-role \
+  --role-name "$INGEST_ROLE" \
+  --assume-role-policy-document '{
+    "Version":"2012-10-17",
+    "Statement":[{"Effect":"Allow","Principal":{"Service":"lambda.amazonaws.com"},"Action":"sts:AssumeRole"}]
+  }' || true
+
+aws --region "$REGION" iam attach-role-policy \
+  --role-name "$INGEST_ROLE" \
+  --policy-arn arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole \
+  || true
+
+aws --region "$REGION" iam put-role-policy \
+  --role-name "$INGEST_ROLE" \
+  --policy-name "${PROJECT_PREFIX}-ingest-ddb" \
+  --policy-document "{
+    \"Version\":\"2012-10-17\",
+    \"Statement\":[
+      {\"Effect\":\"Allow\",\"Action\":[\"dynamodb:PutItem\"],\"Resource\":[
+        \"arn:aws:dynamodb:${REGION}:${ACCOUNT_ID}:table/${DEVICE_EVENTS_TABLE}\",
+        \"arn:aws:dynamodb:${REGION}:${ACCOUNT_ID}:table/${DEDUPE_TABLE}\"
+      ]}
+    ]
+  }" || true
+
+INGEST_ZIP="/tmp/ingest_device_events.zip"
+zip -j "$INGEST_ZIP" tools/sidewalk_v1_lambdas/ingest_device_event.py >/dev/null
+
+aws --region "$REGION" lambda create-function \
+  --function-name "$INGEST_FN" \
+  --runtime python3.11 \
+  --role "arn:aws:iam::${ACCOUNT_ID}:role/${INGEST_ROLE}" \
+  --handler ingest_device_event.lambda_handler \
+  --zip-file "fileb://${INGEST_ZIP}" \
+  --environment "Variables={DEVICE_EVENTS_TABLE=${DEVICE_EVENTS_TABLE},DEDUPE_TABLE=${DEDUPE_TABLE}}" \
+  || true
 aws --region "$REGION" iot create-topic-rule \
   --rule-name "$RULE_NAME" \
   --topic-rule-payload "{
     \"sql\": \"SELECT * FROM 'sidewalk/#'\",
     \"awsIotSqlVersion\": \"2016-03-23\",
     \"actions\": [{
-      \"dynamoDBv2\": {
-        \"roleArn\": \"arn:aws:iam::${ACCOUNT_ID}:role/${IOT_RULE_ROLE}\",
-        \"putItem\": {\"tableName\": \"${DEVICE_EVENTS_TABLE}\"}
+      \"lambda\": {
+        \"functionArn\": \"arn:aws:lambda:${REGION}:${ACCOUNT_ID}:function:${INGEST_FN}\"
       }
     }],
     \"errorAction\": {
@@ -107,6 +157,14 @@ aws --region "$REGION" iot create-topic-rule \
       }
     }
   }" || true
+
+aws --region "$REGION" lambda add-permission \
+  --function-name "$INGEST_FN" \
+  --statement-id "${RULE_NAME}-invoke" \
+  --action "lambda:InvokeFunction" \
+  --principal iot.amazonaws.com \
+  --source-arn "arn:aws:iot:${REGION}:${ACCOUNT_ID}:rule/${RULE_NAME}" \
+  >/dev/null 2>&1 || true
 
 echo "== Create IAM role for archive Lambda =="
 ARCHIVE_ROLE="${PROJECT_PREFIX}-archive-lambda-role"

@@ -5,7 +5,7 @@ trap 'echo "FAIL: ${SCRIPT_NAME}" >&2' ERR
 
 REGION="${AWS_REGION:-us-east-1}"
 PROJECT_PREFIX="${PROJECT_PREFIX:-sidewalk-v1}"
-TABLE_NAME="${PROJECT_PREFIX}-device_events_idempotency"
+TABLE_NAME="${PROJECT_PREFIX}-device_events_dedupe_v2"
 DEVICE_ID="${DEVICE_ID:-test-device}"
 EVENT_ID="${EVENT_ID:-$(python3 - <<'PY'
 import uuid
