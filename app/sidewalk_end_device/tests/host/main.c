@@ -4,11 +4,10 @@
 #include <assert.h>
 #include <string.h>
 #include <stdbool.h>
-
 #include "gpio_event.h"
+#include "safety_gate.h"
 #include "telemetry/telemetry_gpio.h"
 #include "telemetry/telemetry_evse.h"
-
 static void test_gpio_debounce(void)
 {
 	struct gpio_event_state st;
@@ -44,7 +43,7 @@ static void test_gpio_payloads(void)
 
 static void test_evse_payload(void)
 {
-	char buf[320];
+	char buf[384];
 	struct evse_event evt = {
 		.send = true,
 		.pilot_state = EVSE_PILOT_B,
@@ -66,10 +65,109 @@ static void test_evse_payload(void)
 	assert(strstr(buf, "\"energy_delivered_kwh\":0.4567") != NULL);
 }
 
+static void test_safety_ac_on_at_boot(void)
+{
+	struct safety_gate gate;
+
+	safety_gate_init(&gate, 50);
+	safety_gate_update_ac(&gate, 1, 0);
+	assert(!safety_gate_is_ev_allowed(&gate));
+}
+
+static void test_safety_ac_toggle_debounce(void)
+{
+	struct safety_gate gate;
+
+	safety_gate_init(&gate, 50);
+	safety_gate_update_ac(&gate, 0, 0);
+	safety_gate_update_ac(&gate, 1, 10);
+	assert(!safety_gate_is_ev_allowed(&gate));
+	safety_gate_update_ac(&gate, 0, 20);
+	assert(!safety_gate_is_ev_allowed(&gate));
+}
+
+static void test_safety_ac_unknown(void)
+{
+	struct safety_gate gate;
+
+	safety_gate_init(&gate, 50);
+	safety_gate_update_ac(&gate, -1, 10);
+	assert(!safety_gate_is_ev_allowed(&gate));
+	assert(safety_gate_has_fault(&gate, SAFETY_FAULT_AC_UNKNOWN));
+}
+
+static void test_safety_timestamp_backward(void)
+{
+	struct safety_gate gate;
+	int64_t ts;
+
+	safety_gate_init(&gate, 50);
+	(void)safety_gate_apply_timestamp(&gate, 1000);
+	ts = safety_gate_apply_timestamp(&gate, 900);
+	assert(ts == 1000);
+	assert(!safety_gate_is_ev_allowed(&gate));
+	assert(safety_gate_has_fault(&gate, SAFETY_FAULT_TIMESTAMP_BACKWARD));
+	assert(safety_gate_time_anomaly(&gate));
+}
+
+static void test_safety_queue_overflow(void)
+{
+	struct safety_gate gate;
+
+	safety_gate_init(&gate, 50);
+	safety_gate_set_queue_overflow(&gate);
+	assert(!safety_gate_is_ev_allowed(&gate));
+	assert(safety_gate_has_fault(&gate, SAFETY_FAULT_QUEUE_OVERFLOW));
+}
+
+static void test_safety_no_time_sync(void)
+{
+	struct safety_gate gate;
+
+	safety_gate_init(&gate, 50);
+	(void)safety_gate_apply_timestamp(&gate, 1234);
+	assert(!safety_gate_is_ev_allowed(&gate));
+	assert(!safety_gate_time_anomaly(&gate));
+}
+
+static void test_safety_invalid_debounce(void)
+{
+	struct safety_gate gate;
+
+	safety_gate_init(&gate, 0);
+	assert(!safety_gate_is_ev_allowed(&gate));
+	assert(safety_gate_has_fault(&gate, SAFETY_FAULT_DEBOUNCE_INVALID));
+	safety_gate_update_ac(&gate, 0, 0);
+	assert(!safety_gate_is_ev_allowed(&gate));
+}
+
+static void test_safety_null_pointers(void)
+{
+	struct safety_gate gate;
+
+	safety_gate_init(NULL, 50);
+	safety_gate_update_ac(NULL, 1, 0);
+	(void)safety_gate_apply_timestamp(NULL, 100);
+	safety_gate_set_queue_overflow(NULL);
+
+	safety_gate_init(&gate, 50);
+	safety_gate_update_ac(&gate, -1, 0);
+	assert(!safety_gate_is_ev_allowed(&gate));
+	assert(safety_gate_has_fault(&gate, SAFETY_FAULT_INVALID_INPUT));
+}
+
 int main(void)
 {
 	test_gpio_debounce();
 	test_gpio_payloads();
 	test_evse_payload();
+	test_safety_ac_on_at_boot();
+	test_safety_ac_toggle_debounce();
+	test_safety_ac_unknown();
+	test_safety_timestamp_backward();
+	test_safety_queue_overflow();
+	test_safety_no_time_sync();
+	test_safety_invalid_debounce();
+	test_safety_null_pointers();
 	return 0;
 }
