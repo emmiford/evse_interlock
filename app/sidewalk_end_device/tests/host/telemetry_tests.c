@@ -46,26 +46,23 @@ void test_telemetry_required_fields(void)
 
 	int len = telemetry_build_gpio_payload_ex(buf, sizeof(buf), "dev123", "evse",
 						  "extinput0", 1, GPIO_EDGE_RISING, 1234,
-						  "abcd1234", true);
+						  "abcd1234", "evt-req-1", true);
 	assert(len > 0);
 	assert(strstr(buf, "\"schema_version\":\"1.0\"") != NULL);
 	assert(strstr(buf, "\"device_id\":\"dev123\"") != NULL);
 	assert(strstr(buf, "\"timestamp\":1234") != NULL);
 	assert(strstr(buf, "\"data\":{\"gpio\"") != NULL);
 	assert(strstr(buf, "\"time_anomaly\":true") != NULL);
-#if TELEMETRY_EVENT_ID_SUPPORTED
 	assert(strstr(buf, "\"event_id\"") != NULL);
-#else
-	assert(strstr(buf, "\"event_id\"") == NULL);
-#endif
 
 	len = telemetry_build_evse_payload_ex(buf, sizeof(buf), "dev123", "evse", 9876, &evt,
-					      false);
+					      "evt-req-2", false);
 	assert(len > 0);
 	assert(strstr(buf, "\"schema_version\":\"1.0\"") != NULL);
 	assert(strstr(buf, "\"device_id\":\"dev123\"") != NULL);
 	assert(strstr(buf, "\"timestamp\":9876") != NULL);
 	assert(strstr(buf, "\"data\":{\"evse\"") != NULL);
+	assert(strstr(buf, "\"event_id\":\"evt-req-2\"") != NULL);
 }
 
 void test_telemetry_golden_fixtures(void)
@@ -77,14 +74,15 @@ void test_telemetry_golden_fixtures(void)
 	read_fixture("telemetry_gpio_uptime.json", expected, sizeof(expected));
 	len = telemetry_build_gpio_payload_ex(actual, sizeof(actual), "dev123", "evse",
 					      "extinput0", 1, GPIO_EDGE_RISING, 1234,
-					      "abcd1234", false);
+					      "abcd1234", "evt-uptime", false);
 	assert(len > 0);
 	assert(strcmp(actual, expected) == 0);
 
 	read_fixture("telemetry_gpio_epoch.json", expected, sizeof(expected));
 	len = telemetry_build_gpio_payload_ex(actual, sizeof(actual), "dev123", "evse",
 					      "extinput0", 1, GPIO_EDGE_RISING,
-					      1704067200000LL, "abcd1234", false);
+					      1704067200000LL, "abcd1234", "evt-epoch",
+					      false);
 	assert(len > 0);
 	assert(strcmp(actual, expected) == 0);
 }

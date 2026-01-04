@@ -1,1 +1,1 @@
-{"schema_version":"1.0","device_id":"dev123","device_type":"evse","timestamp":1234,"time_anomaly":false,"event_type":"state_change","location":null,"run_id":"abcd1234","data":{"gpio":{"pin":"extinput0","state":1,"edge":"rising","uptime_ms":1234}}}
+{"schema_version":"1.0","device_id":"dev123","device_type":"evse","timestamp":1234,"event_id":"evt-uptime","time_anomaly":false,"event_type":"state_change","location":null,"run_id":"abcd1234","data":{"gpio":{"pin":"extinput0","state":1,"edge":"rising","uptime_ms":1234}}}

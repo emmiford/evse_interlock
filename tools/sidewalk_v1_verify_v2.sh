@@ -21,6 +21,11 @@ import time
 print(int(time.time() * 1000))
 PY
 )"
+EVENT_ID="$(python3 - <<'PY'
+import uuid
+print(uuid.uuid4())
+PY
+)"
 
 aws --region "$REGION" iot-data publish \
   --cli-binary-format raw-in-base64-out \
@@ -30,6 +35,8 @@ aws --region "$REGION" iot-data publish \
     \"device_id\":\"${DEVICE_ID}\",
     \"device_type\":\"evse\",
     \"timestamp\":${TS_MS},
+    \"event_id\":\"${EVENT_ID}\",
+    \"time_anomaly\":false,
     \"event_type\":\"state_change\",
     \"location\":null,
     \"run_id\":null,

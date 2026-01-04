@@ -9,15 +9,16 @@
 
 ZTEST(telemetry, test_gpio_payload_rising)
 {
-	char buf[256];
+	char buf[384];
 	int len = telemetry_build_gpio_payload(buf, sizeof(buf), "dev123", "evse",
 					       "extinput0", 1, GPIO_EDGE_RISING, 1234,
-					       "abcd1234");
+					       "abcd1234", "evt-1");
 	zassert_true(len > 0, NULL);
 	zassert_not_null(strstr(buf, "\"schema_version\":\"1.0\""), NULL);
 	zassert_not_null(strstr(buf, "\"device_id\":\"dev123\""), NULL);
 	zassert_not_null(strstr(buf, "\"device_type\":\"evse\""), NULL);
 	zassert_not_null(strstr(buf, "\"event_type\":\"state_change\""), NULL);
+	zassert_not_null(strstr(buf, "\"event_id\":\"evt-1\""), NULL);
 	zassert_not_null(strstr(buf, "\"pin\":\"extinput0\""), NULL);
 	zassert_not_null(strstr(buf, "\"state\":1"), NULL);
 	zassert_not_null(strstr(buf, "\"edge\":\"rising\""), NULL);
@@ -26,10 +27,10 @@ ZTEST(telemetry, test_gpio_payload_rising)
 
 ZTEST(telemetry, test_gpio_payload_falling)
 {
-	char buf[256];
+	char buf[384];
 	int len = telemetry_build_gpio_payload(buf, sizeof(buf), "dev123", "evse",
 					       "extinput0", 0, GPIO_EDGE_FALLING, 4321,
-					       NULL);
+					       NULL, "evt-2");
 	zassert_true(len > 0, NULL);
 	zassert_not_null(strstr(buf, "\"edge\":\"falling\""), NULL);
 	zassert_not_null(strstr(buf, "\"run_id\":null"), NULL);
@@ -49,10 +50,12 @@ ZTEST(telemetry, test_evse_payload_fields)
 		.session_id = "session-1",
 	};
 
-	int len = telemetry_build_evse_payload(buf, sizeof(buf), "dev123", "evse", 9876, &evt);
+	int len = telemetry_build_evse_payload(buf, sizeof(buf), "dev123", "evse", 9876, &evt,
+					       "evt-3");
 	zassert_true(len > 0, NULL);
 	zassert_not_null(strstr(buf, "\"schema_version\":\"1.0\""), NULL);
 	zassert_not_null(strstr(buf, "\"event_type\":\"state_change\""), NULL);
+	zassert_not_null(strstr(buf, "\"event_id\":\"evt-3\""), NULL);
 	zassert_not_null(strstr(buf, "\"pilot_state\":\"B\""), NULL);
 	zassert_not_null(strstr(buf, "\"pwm_duty_cycle\":12.50"), NULL);
 	zassert_not_null(strstr(buf, "\"current_draw\":1.234"), NULL);

@@ -75,6 +75,7 @@ def main():
     ok = True
     ok &= require_attr("schema_version")
     ok &= require_attr("device_id")
+    ok &= require_attr("event_id")
     ok &= require_attr("timestamp")
     ok &= require_attr("device_type")
     ok &= require_attr("data")

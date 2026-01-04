@@ -24,6 +24,11 @@ import time
 print(int(time.time() * 1000))
 PY
 )"
+EVENT_ID="$(python3 - <<'PY'
+import uuid
+print(uuid.uuid4())
+PY
+)"
 
 ENDPOINT="$(aws --region "$REGION" iot describe-endpoint --endpoint-type iot:Data-ATS --query endpointAddress --output text)"
 aws --region "$REGION" iot-data publish \
@@ -35,6 +40,8 @@ aws --region "$REGION" iot-data publish \
     \"device_id\":\"${DEVICE_ID}\",
     \"device_type\":\"evse\",
     \"timestamp\":${TS_MS},
+    \"event_id\":\"${EVENT_ID}\",
+    \"time_anomaly\":false,
     \"event_type\":\"state_change\",
     \"location\":null,
     \"run_id\":\"archive_test\",
