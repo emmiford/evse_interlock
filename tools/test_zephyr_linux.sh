@@ -4,7 +4,11 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BOARD="${BOARD:-native_posix}"
 
-TESTS=(gpio_event telemetry)
+if [[ -n "${TESTS:-}" ]]; then
+  IFS=" " read -r -a TESTS <<< "${TESTS}"
+else
+  TESTS=(gpio_event telemetry safety_gate)
+fi
 
 for test_name in "${TESTS[@]}"; do
   TEST_DIR="${ROOT_DIR}/app/sidewalk_end_device/tests/${test_name}"
@@ -17,3 +21,4 @@ for test_name in "${TESTS[@]}"; do
     west build -t run -d "${BUILD_DIR}"
   fi
 done
+
