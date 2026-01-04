@@ -37,7 +37,7 @@ ZTEST(telemetry, test_gpio_payload_falling)
 
 ZTEST(telemetry, test_evse_payload_fields)
 {
-	char buf[320];
+	char buf[384];
 	struct evse_event evt = {
 		.send = true,
 		.pilot_state = EVSE_PILOT_B,

@@ -8,6 +8,9 @@
 #include "safety_gate.h"
 #include "telemetry/telemetry_gpio.h"
 #include "telemetry/telemetry_evse.h"
+
+void test_telemetry_required_fields(void);
+void test_telemetry_golden_fixtures(void);
 static void test_gpio_debounce(void)
 {
 	struct gpio_event_state st;
@@ -169,5 +172,7 @@ int main(void)
 	test_safety_no_time_sync();
 	test_safety_invalid_debounce();
 	test_safety_null_pointers();
+	test_telemetry_required_fields();
+	test_telemetry_golden_fixtures();
 	return 0;
 }

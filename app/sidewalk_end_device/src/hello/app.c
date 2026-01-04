@@ -9,6 +9,7 @@
 #include <sidewalk.h>
 #include <app_ble_config.h>
 #include <app_subGHz_config.h>
+#include <sid_hal_memory_ifc.h>
 #include <sid_hal_reset_ifc.h>
 #include <stdbool.h>
 #ifdef CONFIG_SIDEWALK_FILE_TRANSFER_DFU
@@ -157,7 +158,7 @@ static void app_evse_send_event(const struct evse_event *evt, int64_t timestamp_
 		return;
 	}
 
-	char payload[320];
+	char payload[384];
 	int len = telemetry_build_evse_payload(payload, sizeof(payload), APP_DEVICE_ID,
 					       APP_DEVICE_TYPE, timestamp_ms, evt);
 	if (len < 0) {

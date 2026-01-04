@@ -13,6 +13,7 @@ cc -std=c11 -Wall -Wextra -I"${SRC_DIR}/include" -I"${SRC_DIR}/src" \
   "${SRC_DIR}/src/telemetry/telemetry_gpio.c" \
   "${SRC_DIR}/src/telemetry/telemetry_evse.c" \
   "${SRC_DIR}/tests/host/main.c" \
+  "${SRC_DIR}/tests/host/telemetry_tests.c" \
   -o "${BUILD_DIR}/host_tests"
 
 "${BUILD_DIR}/host_tests"
