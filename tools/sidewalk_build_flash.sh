@@ -26,6 +26,16 @@ if [[ ! -f "$CERT_JSON" ]]; then
   exit 1
 fi
 
+if pgrep -f "pyocd rtt" >/dev/null 2>&1; then
+  echo "INFO: stopping existing pyocd rtt before flashing"
+  pkill -f "pyocd rtt" || true
+  sleep 1
+  if pgrep -f "pyocd rtt" >/dev/null 2>&1; then
+    echo "FAIL: pyocd rtt is still running; stop it and retry" >&2
+    exit 1
+  fi
+fi
+
 probe_args=()
 if [[ -n "$PROBE_ID" ]]; then
   probe_args=(--dev-id "$PROBE_ID")

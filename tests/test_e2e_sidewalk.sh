@@ -12,6 +12,16 @@ PAYLOAD_JSON="${ROOT_DIR}/build/e2e_payload.json"
 REGION="${AWS_REGION:-us-east-1}"
 PROJECT_PREFIX="${PROJECT_PREFIX:-sidewalk-v1}"
 
+if pgrep -f "pyocd rtt" >/dev/null 2>&1; then
+  echo "INFO: stopping existing pyocd rtt before flashing"
+  pkill -f "pyocd rtt" || true
+  sleep 1
+  if pgrep -f "pyocd rtt" >/dev/null 2>&1; then
+    echo "FAIL: pyocd rtt is still running; stop it and retry" >&2
+    exit 1
+  fi
+fi
+
 west build -p always -d "${BUILD_DIR}" -b rak4631 "${APP_DIR}" -- \
   -DOVERLAY_CONFIG="config/overlays/overlay-sidewalk_logging_v1.conf" \
   -DPM_STATIC_YML_FILE:FILEPATH="${APP_DIR}/config/pm_static/pm_static_rak4631_nrf52840.yml"
@@ -24,35 +34,14 @@ echo "run_id=${RUN_ID}"
 
 python3 "${ROOT_DIR}/tests/mqtt_wait_for_run_id.py" --run-id "${RUN_ID}" --timeout 90 --outfile "${PAYLOAD_JSON}"
 
-DEVICE_ID="$(python3 - <<'PY'
-import json
-import sys
+json_get() {
+  python3 -c 'import json,sys; data=json.load(open(sys.argv[1], "r", encoding="utf-8")); print(data.get(sys.argv[2], ""))' \
+    "$1" "$2"
+}
 
-with open(sys.argv[1], "r", encoding="utf-8") as f:
-    data = json.load(f)
-print(data.get("device_id", ""))
-PY
-"${PAYLOAD_JSON}")"
-
-EVENT_ID="$(python3 - <<'PY'
-import json
-import sys
-
-with open(sys.argv[1], "r", encoding="utf-8") as f:
-    data = json.load(f)
-print(data.get("event_id", ""))
-PY
-"${PAYLOAD_JSON}")"
-
-TIMESTAMP_MS="$(python3 - <<'PY'
-import json
-import sys
-
-with open(sys.argv[1], "r", encoding="utf-8") as f:
-    data = json.load(f)
-print(data.get("timestamp", ""))
-PY
-"${PAYLOAD_JSON}")"
+DEVICE_ID="$(json_get "${PAYLOAD_JSON}" "device_id")"
+EVENT_ID="$(json_get "${PAYLOAD_JSON}" "event_id")"
+TIMESTAMP_MS="$(json_get "${PAYLOAD_JSON}" "timestamp")"
 
 if [[ -z "${DEVICE_ID}" ]]; then
   echo "FAIL: device_id not found in payload" >&2
