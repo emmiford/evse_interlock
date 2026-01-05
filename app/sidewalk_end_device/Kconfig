@@ -11,11 +11,6 @@ choice SID_END_DEVICE
     default SID_END_DEVICE_HELLO
 config SID_END_DEVICE_HELLO
     bool "Sidewalk hello world application"
-config SID_END_DEVICE_SENSOR_MONITORING
-    bool "Demo sensor monitoring application"
-    imply SIDEWALK_DEMO_PARSER
-    imply SENSOR
-    imply TEMP_NRF5
 config SID_END_DEVICE_DUT
     bool "Device under test application"
 endchoice #SID_END_DEVICE
@@ -179,12 +174,6 @@ config SID_END_DEVICE_DEVICE_TYPE
       Device type included in outbound telemetry JSON.
 
 endif #SID_END_DEVICE_HELLO
-
-if SID_END_DEVICE_SENSOR_MONITORING
-
-rsource "Kconfig.sensor_monitoring"
-
-endif #SID_END_DEVICE_SENSOR_MONITORING
 
 config SID_END_DEVICE_CLI
     bool "Enable Sidewalk CLI (DUT)"

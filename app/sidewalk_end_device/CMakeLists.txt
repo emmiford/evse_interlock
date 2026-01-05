@@ -34,16 +34,7 @@ target_sources_ifdef(CONFIG_SIDEWALK_FILE_TRANSFER_DFU app PRIVATE
     src/sbdt/dfu_file_transfer.c
 )
 
-if(CONFIG_SID_END_DEVICE_SENSOR_MONITORING)
-    target_sources(app PRIVATE
-        src/sensor_monitoring/app_buttons.c
-        src/sensor_monitoring/app_leds.c
-        src/sensor_monitoring/app_sensor.c
-        src/sensor_monitoring/app_tx.c
-        src/sensor_monitoring/app_rx.c
-        src/sensor_monitoring/app.c
-    )
-elseif(CONFIG_SID_END_DEVICE_DUT)
+if(CONFIG_SID_END_DEVICE_DUT)
     target_sources(app PRIVATE
         src/cli/app.c
     )
