@@ -32,5 +32,5 @@ For security guidance, see `SECURITY.md`.
 
 ## Project Structure
 
-- `app/sidewalk_end_device`: product-owned Sidewalk end-device app (formerly based on Sidewalk sample).
+- `app/evse_interlock_v1`: product-owned Sidewalk end-device app (formerly based on Sidewalk sample).
 - `sidewalk/`: upstream Sidewalk SDK submodule (kept pristine; no local edits).

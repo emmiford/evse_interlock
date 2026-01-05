@@ -7,7 +7,7 @@
 
 2) Exact build + flash commands that work
 - Build:
-  - `west build -p always -d /Users/jan/dev/sidewalk-workspace/build -b rak4631 /Users/jan/dev/sidewalk-workspace/app/sidewalk_end_device -- -DOVERLAY_CONFIG=config/overlays/overlay-sidewalk_logging_v1.conf -DPM_STATIC_YML_FILE:FILEPATH=/Users/jan/dev/sidewalk-workspace/app/sidewalk_end_device/config/pm_static/pm_static_rak4631_nrf52840.yml`
+  - `west build -p always -d /Users/jan/dev/sidewalk-workspace/build -b rak4631 /Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1 -- -DOVERLAY_CONFIG=config/overlays/overlay-sidewalk_logging_v1.conf -DPM_STATIC_YML_FILE:FILEPATH=/Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1/config/pm_static/pm_static_rak4631_nrf52840.yml`
 - Flash app:
   - `west flash --runner pyocd --build-dir /Users/jan/dev/sidewalk-workspace/build -- --target nrf52840 --dev-id 0700000100120036470000124e544634a5a5a5a597969908`
 - Flash mfg (after provisioning):
@@ -29,24 +29,24 @@
   - Provision command (example):
     - `python3 provision.py nordic aws --certificate_json /Users/jan/dev/sidewalk-workspace/sidewalk/tools/provision/keys/certificate.json --addr 0xFC000 --output_bin mfg.bin --output_hex rak4631_mfg.hex`
 - Key app configs (hello):
-  - `app/sidewalk_end_device/config/overlays/overlay-sidewalk_logging_v1.conf`
+  - `app/evse_interlock_v1/config/overlays/overlay-sidewalk_logging_v1.conf`
   - `CONFIG_SID_END_DEVICE_HELLO=y`
   - `CONFIG_SID_END_DEVICE_GPIO_EVENTS=y`
   - `CONFIG_SID_END_DEVICE_GPIO_SIMULATOR=y` (test default)
 
 4) Where the GPIO input code lives and which alias/pin it uses
-- Code: `app/sidewalk_end_device/src/hello/app.c`
+- Code: `app/evse_interlock_v1/src/hello/app.c`
 - Pure logic module:
-  - `app/sidewalk_end_device/include/gpio_event.h`
-  - `app/sidewalk_end_device/src/gpio_event.c`
+  - `app/evse_interlock_v1/include/gpio_event.h`
+  - `app/evse_interlock_v1/src/gpio_event.c`
 - Alias: `extinput0`
-- Alias definition: `app/sidewalk_end_device/boards/rak4631.overlay`
+- Alias definition: `app/evse_interlock_v1/boards/rak4631.overlay`
 - Pin: `GPIO0.11` (active low, pull-up)
 
 5) How uplinks are sent (function names, files)
 - Send path:
-  - `app/sidewalk_end_device/src/hello/app.c` -> `sidewalk_event_send(sidewalk_event_send_msg, ...)`
-  - Handler: `app/sidewalk_end_device/src/sidewalk_events.c` (`sidewalk_event_send_msg`)
+  - `app/evse_interlock_v1/src/hello/app.c` -> `sidewalk_event_send(sidewalk_event_send_msg, ...)`
+  - Handler: `app/evse_interlock_v1/src/sidewalk_events.c` (`sidewalk_event_send_msg`)
 - Payload build:
   - `gpio_event_build_payload()` in `gpio_event.c`
 - Log on success/error:
@@ -62,10 +62,10 @@
 
 7) Test plan status: implemented vs pending
 - Implemented:
-  - Unit tests (host): `app/sidewalk_end_device/tests/gpio_event` (ztest)
+  - Unit tests (host): `app/evse_interlock_v1/tests/gpio_event` (ztest)
   - HIL test: `tests/test_hil_gpio.sh` + `tests/test_hil_gpio.py`
   - E2E test: `tests/test_e2e_sidewalk.sh`
-  - Test plan doc: `app/sidewalk_end_device/docs/TESTING.md`
+  - Test plan doc: `app/evse_interlock_v1/docs/TESTING.md`
 - Pending:
   - Run unit/HIL/E2E tests to confirm in this environment.
   - Optional: switch from simulator to real GPIO input wiring.
@@ -80,14 +80,14 @@
 
 9) Files created/edited/deleted during this session
 - Created:
-  - `app/sidewalk_end_device/include/gpio_event.h`
-  - `app/sidewalk_end_device/src/gpio_event.c`
-  - `app/sidewalk_end_device/boards/rak4631.overlay`
-  - `app/sidewalk_end_device/config/overlays/overlay-gpio-test.conf`
-  - `app/sidewalk_end_device/tests/gpio_event/CMakeLists.txt`
-  - `app/sidewalk_end_device/tests/gpio_event/prj.conf`
-  - `app/sidewalk_end_device/tests/gpio_event/src/main.c`
-  - `app/sidewalk_end_device/docs/TESTING.md`
+  - `app/evse_interlock_v1/include/gpio_event.h`
+  - `app/evse_interlock_v1/src/gpio_event.c`
+  - `app/evse_interlock_v1/boards/rak4631.overlay`
+  - `app/evse_interlock_v1/config/overlays/overlay-gpio-test.conf`
+  - `app/evse_interlock_v1/tests/gpio_event/CMakeLists.txt`
+  - `app/evse_interlock_v1/tests/gpio_event/prj.conf`
+  - `app/evse_interlock_v1/tests/gpio_event/src/main.c`
+  - `app/evse_interlock_v1/docs/TESTING.md`
   - `tests/test_unit_host.sh`
   - `tests/test_hil_gpio.sh`
   - `tests/test_hil_gpio.py`
@@ -95,10 +95,10 @@
   - `tests/mqtt_wait_for_run_id.py`
   - `tests/test_e2e_sidewalk.sh`
 - Edited:
-  - `app/sidewalk_end_device/src/hello/app.c`
-  - `app/sidewalk_end_device/Kconfig`
-  - `app/sidewalk_end_device/config/overlays/overlay-sidewalk_logging_v1.conf`
-  - `app/sidewalk_end_device/CMakeLists.txt`
+  - `app/evse_interlock_v1/src/hello/app.c`
+  - `app/evse_interlock_v1/Kconfig`
+  - `app/evse_interlock_v1/config/overlays/overlay-sidewalk_logging_v1.conf`
+  - `app/evse_interlock_v1/CMakeLists.txt`
   - `sidewalk/tools/provision/.gitignore` (added `keys/`)
   - `sidewalk/doc/KNOWN_GOOD_SETUP.md`
   - `tools/sidewalk_build_flash.sh`
@@ -109,31 +109,31 @@
 ## Change log (detailed)
 
 ### Files changed/created and why
-- `/Users/jan/dev/sidewalk-workspace/app/sidewalk_end_device/src/hello/app.c`
+- `/Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1/src/hello/app.c`
   - Added GPIO change detection, debounce scheduling, simulator/test mode, run_id logging, and Sidewalk uplink send on state changes.
-- `/Users/jan/dev/sidewalk-workspace/app/sidewalk_end_device/include/gpio_event.h`
+- `/Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1/include/gpio_event.h`
   - New pure-logic interface for debounce/edge detection and payload building (unit-testable).
-- `/Users/jan/dev/sidewalk-workspace/app/sidewalk_end_device/src/gpio_event.c`
+- `/Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1/src/gpio_event.c`
   - New pure-logic implementation for debounce/edge detection and payload formatting.
-- `/Users/jan/dev/sidewalk-workspace/app/sidewalk_end_device/Kconfig`
+- `/Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1/Kconfig`
   - Added GPIO test configs: debounce/poll intervals, simulator, and E2E test mode.
-- `/Users/jan/dev/sidewalk-workspace/app/sidewalk_end_device/CMakeLists.txt`
+- `/Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1/CMakeLists.txt`
   - Added `src/gpio_event.c` to build.
-- `/Users/jan/dev/sidewalk-workspace/app/sidewalk_end_device/config/overlays/overlay-sidewalk_logging_v1.conf`
+- `/Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1/config/overlays/overlay-sidewalk_logging_v1.conf`
   - Enabled GPIO events/simulator config for the hello variant.
-- `/Users/jan/dev/sidewalk-workspace/app/sidewalk_end_device/config/overlays/overlay-gpio-test.conf`
+- `/Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1/config/overlays/overlay-gpio-test.conf`
   - New overlay to enable deterministic simulator test mode for HIL/E2E.
-- `/Users/jan/dev/sidewalk-workspace/app/sidewalk_end_device/boards/rak4631.overlay`
+- `/Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1/boards/rak4631.overlay`
   - New `extinput0` GPIO alias for RAK4631 on GPIO0.11 (active low, pull-up).
-- `/Users/jan/dev/sidewalk-workspace/app/sidewalk_end_device/tests/gpio_event/*`
+- `/Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1/tests/gpio_event/*`
   - New ztest unit tests for debounce/edge/payload behavior (host-native).
-- `/Users/jan/dev/sidewalk-workspace/app/sidewalk_end_device/docs/TESTING.md`
+- `/Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1/docs/TESTING.md`
   - Test plan and E2E trigger documentation.
 - `/Users/jan/dev/sidewalk-workspace/sidewalk/tools/provision/.gitignore`
   - Added `keys/` to ignore provisioning certs.
 - `/Users/jan/dev/sidewalk-workspace/sidewalk/doc/KNOWN_GOOD_SETUP.md`
   - Recorded known-good setup/versions (created earlier in session).
-- `/Users/jan/dev/sidewalk-workspace/app/sidewalk_end_device/config/pm_static/pm_static_rak4631_nrf52840.yml`
+- `/Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1/config/pm_static/pm_static_rak4631_nrf52840.yml`
   - Static partition layout for RAK4631 build (created earlier in session).
 - `/Users/jan/dev/sidewalk-workspace/tools/sidewalk_build_flash.sh`
   - Updated build/flash/provision flow and probe handling (created/edited earlier).

@@ -5,7 +5,7 @@ trap 'echo "FAIL: ${SCRIPT_NAME}" >&2' ERR
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD_DIR="${ROOT_DIR}/build-tests/host"
-SRC_DIR="${ROOT_DIR}/app/sidewalk_end_device"
+SRC_DIR="${ROOT_DIR}/app/evse_interlock_v1"
 
 mkdir -p "${BUILD_DIR}"
 

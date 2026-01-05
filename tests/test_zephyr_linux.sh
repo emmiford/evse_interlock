@@ -13,7 +13,7 @@ else
 fi
 
 for test_name in "${TESTS[@]}"; do
-  TEST_DIR="${ROOT_DIR}/app/sidewalk_end_device/tests/${test_name}"
+  TEST_DIR="${ROOT_DIR}/app/evse_interlock_v1/tests/${test_name}"
   BUILD_DIR="${ROOT_DIR}/build-tests/${test_name}"
 
   west build -p always -b "${BOARD}" -d "${BUILD_DIR}" "${TEST_DIR}"

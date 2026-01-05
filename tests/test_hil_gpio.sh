@@ -5,7 +5,7 @@ trap 'echo "FAIL: ${SCRIPT_NAME}" >&2' ERR
 
 ROOT_DIR="/Users/jan/dev/sidewalk-workspace"
 BUILD_DIR="${ROOT_DIR}/build"
-APP_DIR="${ROOT_DIR}/app/sidewalk_end_device"
+APP_DIR="${ROOT_DIR}/app/evse_interlock_v1"
 PROBE_ID="${PROBE_ID:-0700000100120036470000124e544634a5a5a5a597969908}"
 LOG_FILE="${ROOT_DIR}/build/hil_gpio_rtt.log"
 HIL_MODE="${HIL_MODE:-basic}"

@@ -100,7 +100,7 @@ Layer 0C -- HIL Safety Invariant Verification:
   - gpio_event: debounce, edge detection, no-spam, transitions
   - telemetry: payload field correctness, schema stability
 - Current implementation: custom test harness in
-  `app/sidewalk_end_device/tests/host/main.c`
+  `app/evse_interlock_v1/tests/host/main.c`
 
 ### 2. Zephyr Integration Tests
 

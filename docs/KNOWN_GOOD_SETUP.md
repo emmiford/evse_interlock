@@ -17,7 +17,7 @@ paths used on macOS (Intel) with the RAK4630.
 
 ## Required Files
 
-- PM static file: `app/sidewalk_end_device/config/pm_static/pm_static_rak4631_nrf52840.yml`
+- PM static file: `app/evse_interlock_v1/config/pm_static/pm_static_rak4631_nrf52840.yml`
 - Provisioning JSON: `sidewalk/tools/provision/keys/certificate.json`
 
 ## Build + Flash (CLI)
@@ -25,9 +25,9 @@ paths used on macOS (Intel) with the RAK4630.
 ```bash
 rm -rf /Users/jan/dev/sidewalk-workspace/build
 
-west build -b rak4631 /Users/jan/dev/sidewalk-workspace/app/sidewalk_end_device -- \
+west build -b rak4631 /Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1 -- \
   -DOVERLAY_CONFIG="config/overlays/overlay-sidewalk_logging_v1.conf" \
-  -DPM_STATIC_YML_FILE:FILEPATH=/Users/jan/dev/sidewalk-workspace/app/sidewalk_end_device/config/pm_static/pm_static_rak4631_nrf52840.yml
+  -DPM_STATIC_YML_FILE:FILEPATH=/Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1/config/pm_static/pm_static_rak4631_nrf52840.yml
 
 west flash --runner pyocd --build-dir /Users/jan/dev/sidewalk-workspace/build -- \
   --target nrf52840 --dev-id 0700000100120036470000124e544634a5a5a5a597969908

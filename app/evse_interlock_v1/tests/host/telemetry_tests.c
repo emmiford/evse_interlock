@@ -10,7 +10,7 @@
 #include "telemetry/telemetry_evse.h"
 
 #ifndef TEST_FIXTURES_DIR
-#define TEST_FIXTURES_DIR "app/sidewalk_end_device/tests/host/fixtures"
+#define TEST_FIXTURES_DIR "app/evse_interlock_v1/tests/host/fixtures"
 #endif
 
 static void read_fixture(const char *name, char *buf, size_t buf_len)
