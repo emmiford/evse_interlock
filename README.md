@@ -7,7 +7,7 @@
 This repository intentionally excludes secrets and provisioning artifacts. You must create them locally.
 
 Missing-by-design files:
-- `sidewalk/tools/provision/keys/certificate.json` (use `sidewalk/tools/provision/keys/certificate.json.example` as a template)
+- `.secrets/sidewalk/certificate.json` (your Sidewalk provisioning JSON)
 - `tools/devices_batch.csv` (use `tools/devices_batch.csv.example`)
 - `tools/site_id_key.b64` (use `tools/site_id_key.b64.example`)
 - Local AWS/Sidewalk outputs (`aws_*.json`, `aws_*_output.txt`, `bash_output*.txt`)

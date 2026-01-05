@@ -14,7 +14,7 @@ export ZEPHYR_TOOLCHAIN_VARIANT="${ZEPHYR_TOOLCHAIN_VARIANT:-zephyr}"
 
 PM_STATIC_YML="${PM_STATIC_YML:-$WORKSPACE/app/evse_interlock_v1/config/pm_static/pm_static_rak4631_nrf52840.yml}"
 PROVISION_DIR="${PROVISION_DIR:-$WORKSPACE/sidewalk/tools/provision}"
-CERT_JSON="${CERT_JSON:-$PROVISION_DIR/keys/certificate.json}"
+CERT_JSON="${CERT_JSON:-$WORKSPACE/.secrets/sidewalk/certificate.json}"
 
 if [[ ! -f "$PM_STATIC_YML" ]]; then
   echo "Missing PM static file: $PM_STATIC_YML" >&2

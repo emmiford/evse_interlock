@@ -18,7 +18,7 @@ paths used on macOS (Intel) with the RAK4630.
 ## Required Files
 
 - PM static file: `app/evse_interlock_v1/config/pm_static/pm_static_rak4631_nrf52840.yml`
-- Provisioning JSON: `sidewalk/tools/provision/keys/certificate.json`
+- Provisioning JSON: `.secrets/sidewalk/certificate.json`
 
 ## Build + Flash (CLI)
 
@@ -40,7 +40,7 @@ cd /Users/jan/dev/sidewalk-workspace/sidewalk/tools/provision
 pip install -r requirements.txt
 
 python3 provision.py nordic aws \
-  --certificate_json /Users/jan/dev/sidewalk-workspace/sidewalk/tools/provision/keys/certificate.json \
+  --certificate_json /Users/jan/dev/sidewalk-workspace/.secrets/sidewalk/certificate.json \
   --addr 0xFC000 \
   --output_bin mfg.bin \
   --output_hex rak4631_mfg.hex

@@ -3,7 +3,7 @@
 Do not commit any secrets, credentials, or provisioning artifacts to this repository.
 
 Never commit:
-- Sidewalk provisioning files (e.g., `sidewalk/tools/provision/keys/certificate.json`).
+- Sidewalk provisioning files (e.g., `.secrets/sidewalk/certificate.json`).
 - Sidewalk manufacturing serial numbers (SMSN) and device private keys.
 - AWS credentials, profiles, or tokens.
 - Private keys or certificates (`*.pem`, `*.key`, `*.crt`, `*.p12`, etc.).

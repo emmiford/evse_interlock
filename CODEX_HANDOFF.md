@@ -24,10 +24,10 @@
 - Board: `rak4631/nrf52840`
 - Shield: `Semtech sx1262`
 - Manufacturing/provisioning:
-  - `sidewalk/tools/provision/keys/certificate.json` (ignored in git)
+  - `.secrets/sidewalk/certificate.json` (ignored in git)
   - MFG address: `0xFC000`
   - Provision command (example):
-    - `python3 provision.py nordic aws --certificate_json /Users/jan/dev/sidewalk-workspace/sidewalk/tools/provision/keys/certificate.json --addr 0xFC000 --output_bin mfg.bin --output_hex rak4631_mfg.hex`
+    - `python3 provision.py nordic aws --certificate_json /Users/jan/dev/sidewalk-workspace/.secrets/sidewalk/certificate.json --addr 0xFC000 --output_bin mfg.bin --output_hex rak4631_mfg.hex`
 - Key app configs (hello):
   - `app/evse_interlock_v1/config/overlays/overlay-sidewalk_logging_v1.conf`
   - `CONFIG_SID_END_DEVICE_HELLO=y`
