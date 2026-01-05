@@ -20,7 +20,7 @@ if [[ "${HIL_MODE}" == "safety" ]]; then
 fi
 
 west build -p always -d "${BUILD_DIR}" -b rak4631 "${APP_DIR}" -- \
-  -DOVERLAY_CONFIG="overlay-hello.conf;overlay-gpio-test.conf" \
+  -DOVERLAY_CONFIG="overlay-hello.conf" \
   -DPM_STATIC_YML_FILE:FILEPATH="${APP_DIR}/pm_static_rak4631_nrf52840.yml"
 
 west flash --runner pyocd --build-dir "${BUILD_DIR}" -- \
