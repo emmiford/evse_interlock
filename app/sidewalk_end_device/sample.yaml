@@ -19,7 +19,7 @@ tests:
       - nrf54l15dk/nrf54l15/cpuapp/ns
       - nrf54l15dk/nrf54l10/cpuapp
     extra_args:
-      - OVERLAY_CONFIG="overlay-hello.conf"
+      - OVERLAY_CONFIG="overlay-sidewalk_logging_v1.conf"
       - SHIELD="simple_arduino_adapter;semtech_sx1262mb2cas"
     extra_configs:
       - CONFIG_SID_END_DEVICE_PERSISTENT_LINK_MASK=y
@@ -39,7 +39,7 @@ tests:
       - nrf54l15dk/nrf54l15/cpuapp/ns
       - nrf54l15dk/nrf54l10/cpuapp
     extra_args:
-      - OVERLAY_CONFIG="overlay-hello.conf"
+      - OVERLAY_CONFIG="overlay-sidewalk_logging_v1.conf"
       - SHIELD="simple_arduino_adapter;semtech_lr1110mb1xxs"
     extra_configs:
       - CONFIG_SID_END_DEVICE_PERSISTENT_LINK_MASK=y
@@ -59,7 +59,7 @@ tests:
       - nrf54l15dk/nrf54l10/cpuapp
     extra_args:
       - FILE_SUFFIX=release
-      - OVERLAY_CONFIG="overlay-hello.conf"
+      - OVERLAY_CONFIG="overlay-sidewalk_logging_v1.conf"
       - SHIELD="simple_arduino_adapter;semtech_sx1262mb2cas"
     extra_configs:
       - CONFIG_SID_END_DEVICE_PERSISTENT_LINK_MASK=y
@@ -79,7 +79,7 @@ tests:
       - nrf54l15dk/nrf54l10/cpuapp
     extra_args:
       - FILE_SUFFIX=release
-      - OVERLAY_CONFIG="overlay-hello.conf"
+      - OVERLAY_CONFIG="overlay-sidewalk_logging_v1.conf"
       - SHIELD="simple_arduino_adapter;semtech_lr1110mb1xxs"
 
     extra_configs:

@@ -33,6 +33,7 @@
 #include <zephyr/sys/util.h>
 #include <zephyr/random/random.h>
 #include <inttypes.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "gpio_event.h"
@@ -257,6 +258,7 @@ static void app_gpio_poll_timer_handler(struct k_timer *timer)
 	}
 }
 
+#if defined(CONFIG_SID_END_DEVICE_GPIO_SIMULATOR)
 static void app_gpio_sim_timer_handler(struct k_timer *timer)
 {
 	ARG_UNUSED(timer);
@@ -271,6 +273,7 @@ static void app_gpio_sim_timer_handler(struct k_timer *timer)
 	app_gpio_sim_transitions++;
 	app_gpio_schedule_debounce(app_gpio_raw_state);
 }
+#endif
 
 static void app_gpio_init(void)
 {
@@ -285,6 +288,7 @@ static void app_gpio_init(void)
 	app_gpio_simulator = true;
 #endif
 
+#if defined(CONFIG_SID_END_DEVICE_GPIO_SIMULATOR)
 	if (app_gpio_simulator) {
 		LOG_INF("GPIO simulator enabled");
 		app_gpio_raw_state = 0;
@@ -294,6 +298,7 @@ static void app_gpio_init(void)
 			      K_MSEC(APP_GPIO_SIM_INTERVAL_MS));
 		return;
 	}
+#endif
 
 #if APP_GPIO_HAS_DT
 	if (!device_is_ready(app_gpio.port)) {

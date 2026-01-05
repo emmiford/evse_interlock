@@ -26,7 +26,7 @@ paths used on macOS (Intel) with the RAK4630.
 rm -rf /Users/jan/dev/sidewalk-workspace/build
 
 west build -b rak4631 /Users/jan/dev/sidewalk-workspace/app/sidewalk_end_device -- \
-  -DOVERLAY_CONFIG="overlay-hello.conf" \
+  -DOVERLAY_CONFIG="overlay-sidewalk_logging_v1.conf" \
   -DPM_STATIC_YML_FILE:FILEPATH=/Users/jan/dev/sidewalk-workspace/app/sidewalk_end_device/pm_static_rak4631_nrf52840.yml
 
 west flash --runner pyocd --build-dir /Users/jan/dev/sidewalk-workspace/build -- \

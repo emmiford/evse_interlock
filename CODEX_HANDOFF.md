@@ -7,7 +7,7 @@
 
 2) Exact build + flash commands that work
 - Build:
-  - `west build -p always -d /Users/jan/dev/sidewalk-workspace/build -b rak4631 /Users/jan/dev/sidewalk-workspace/sidewalk/samples/sid_end_device -- -DOVERLAY_CONFIG=overlay-hello.conf -DPM_STATIC_YML_FILE:FILEPATH=/Users/jan/dev/sidewalk-workspace/sidewalk/samples/sid_end_device/pm_static_rak4631_nrf52840.yml`
+  - `west build -p always -d /Users/jan/dev/sidewalk-workspace/build -b rak4631 /Users/jan/dev/sidewalk-workspace/sidewalk/samples/sid_end_device -- -DOVERLAY_CONFIG=overlay-sidewalk_logging_v1.conf -DPM_STATIC_YML_FILE:FILEPATH=/Users/jan/dev/sidewalk-workspace/sidewalk/samples/sid_end_device/pm_static_rak4631_nrf52840.yml`
 - Flash app:
   - `west flash --runner pyocd --build-dir /Users/jan/dev/sidewalk-workspace/build -- --target nrf52840 --dev-id 0700000100120036470000124e544634a5a5a5a597969908`
 - Flash mfg (after provisioning):
@@ -29,7 +29,7 @@
   - Provision command (example):
     - `python3 provision.py nordic aws --certificate_json /Users/jan/dev/sidewalk-workspace/sidewalk/tools/provision/keys/certificate.json --addr 0xFC000 --output_bin mfg.bin --output_hex rak4631_mfg.hex`
 - Key app configs (hello):
-  - `sidewalk/samples/sid_end_device/overlay-hello.conf`
+  - `sidewalk/samples/sid_end_device/overlay-sidewalk_logging_v1.conf`
   - `CONFIG_SID_END_DEVICE_HELLO=y`
   - `CONFIG_SID_END_DEVICE_GPIO_EVENTS=y`
   - `CONFIG_SID_END_DEVICE_GPIO_SIMULATOR=y` (test default)
@@ -73,7 +73,7 @@
 8) Known issues / gotchas
 - RAK4631 DTS has no readable user button (`gpio-keys`); reset is nRESET only.
 - Simulator is enabled by default; disable with:
-  - `CONFIG_SID_END_DEVICE_GPIO_SIMULATOR=n` in `overlay-hello.conf`.
+  - `CONFIG_SID_END_DEVICE_GPIO_SIMULATOR=n` in `overlay-sidewalk_logging_v1.conf`.
 - Codex sandbox write access currently limited to `/Users/jan/dev/st/STM32-Sidewalk-SDK`; writing under `/Users/jan/dev/sidewalk-workspace` requires approval in this session.
 - `awsiotsdk` required for E2E MQTT subscribe:
   - `python3 -m pip install awsiotsdk`
@@ -97,7 +97,7 @@
 - Edited:
   - `sidewalk/samples/sid_end_device/src/hello/app.c`
   - `sidewalk/samples/sid_end_device/Kconfig`
-  - `sidewalk/samples/sid_end_device/overlay-hello.conf`
+  - `sidewalk/samples/sid_end_device/overlay-sidewalk_logging_v1.conf`
   - `sidewalk/samples/sid_end_device/CMakeLists.txt`
   - `sidewalk/tools/provision/.gitignore` (added `keys/`)
   - `sidewalk/doc/KNOWN_GOOD_SETUP.md`
@@ -119,7 +119,7 @@
   - Added GPIO test configs: debounce/poll intervals, simulator, and E2E test mode.
 - `/Users/jan/dev/sidewalk-workspace/sidewalk/samples/sid_end_device/CMakeLists.txt`
   - Added `src/gpio_event.c` to build.
-- `/Users/jan/dev/sidewalk-workspace/sidewalk/samples/sid_end_device/overlay-hello.conf`
+- `/Users/jan/dev/sidewalk-workspace/sidewalk/samples/sid_end_device/overlay-sidewalk_logging_v1.conf`
   - Enabled GPIO events/simulator config for the hello variant.
 - `/Users/jan/dev/sidewalk-workspace/sidewalk/samples/sid_end_device/overlay-gpio-test.conf`
   - New overlay to enable deterministic simulator test mode for HIL/E2E.
@@ -157,7 +157,7 @@
 $ git -C /Users/jan/dev/sidewalk-workspace/sidewalk diff --stat
 samples/sid_end_device/CMakeLists.txt     |   1 +
 samples/sid_end_device/Kconfig            |  46 ++++++
-samples/sid_end_device/overlay-hello.conf |   3 +
+samples/sid_end_device/overlay-sidewalk_logging_v1.conf |   3 +
 samples/sid_end_device/src/hello/app.c    | 262 ++++++++++++++++++++++++++++++
 tools/provision/.gitignore                |   3 +-
 5 files changed, 314 insertions(+), 1 deletion(-)
