@@ -15,10 +15,14 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--device-id", required=True)
     parser.add_argument("--run-id", required=True)
+    parser.add_argument("--event-id", default=None)
     parser.add_argument("--table", default=None)
     parser.add_argument("--region", default=None)
     parser.add_argument("--since-ms", type=int, default=None)
     parser.add_argument("--limit", type=int, default=25)
+    parser.add_argument("--timeout", type=int, default=90)
+    parser.add_argument("--poll-interval", type=int, default=5)
+    parser.add_argument("--ttl-skew-seconds", type=int, default=3600)
     return parser.parse_args()
 
 
@@ -27,40 +31,50 @@ def main():
     region = args.region or "us-east-1"
     table = args.table or "sidewalk-v1-device_events_v2"
     since_ms = args.since_ms or int(time.time() * 1000) - 10 * 60 * 1000
-    now_ms = int(time.time() * 1000)
-
-    cmd = [
-        "aws",
-        "--region",
-        region,
-        "dynamodb",
-        "query",
-        "--table-name",
-        table,
-        "--key-condition-expression",
-        "device_id = :d AND #ts BETWEEN :s AND :e",
-        "--expression-attribute-names",
-        '{"#ts":"timestamp"}',
-        "--expression-attribute-values",
-        json.dumps(
-            {
-                ":d": {"S": args.device_id},
-                ":s": {"N": str(since_ms)},
-                ":e": {"N": str(now_ms)},
-            }
-        ),
-        "--limit",
-        str(args.limit),
-    ]
-
-    data = run_aws(cmd)
-    items = data.get("Items", [])
+    deadline = time.time() + args.timeout
     match = None
-    for item in items:
-        run_id = item.get("run_id", {}).get("S")
-        if run_id == args.run_id:
+    now_ms = None
+
+    while time.time() < deadline and not match:
+        now_ms = int(time.time() * 1000)
+        cmd = [
+            "aws",
+            "--region",
+            region,
+            "dynamodb",
+            "query",
+            "--table-name",
+            table,
+            "--key-condition-expression",
+            "device_id = :d AND #ts BETWEEN :s AND :e",
+            "--expression-attribute-names",
+            '{"#ts":"timestamp"}',
+            "--expression-attribute-values",
+            json.dumps(
+                {
+                    ":d": {"S": args.device_id},
+                    ":s": {"N": str(since_ms)},
+                    ":e": {"N": str(now_ms)},
+                }
+            ),
+            "--limit",
+            str(args.limit),
+        ]
+
+        data = run_aws(cmd)
+        items = data.get("Items", [])
+        for item in items:
+            run_id = item.get("run_id", {}).get("S")
+            if run_id != args.run_id:
+                continue
+            if args.event_id:
+                if item.get("event_id", {}).get("S") != args.event_id:
+                    continue
             match = item
             break
+
+        if not match:
+            time.sleep(args.poll_interval)
 
     if not match:
         print("FAIL: run_id not found in DynamoDB query window", file=sys.stderr)
@@ -89,6 +103,12 @@ def main():
         if ttl_int > 10_000_000_000:
             print("FAIL: ttl appears to be ms, not seconds", file=sys.stderr)
             ok = False
+        ts_val = match.get("timestamp", {}).get("N")
+        if ts_val:
+            expected_ttl = int(int(ts_val) / 1000) + 90 * 24 * 60 * 60
+            if abs(ttl_int - expected_ttl) > args.ttl_skew_seconds:
+                print("FAIL: ttl not aligned with timestamp", file=sys.stderr)
+                ok = False
 
     schema_version = match.get("schema_version", {}).get("S")
     if schema_version and schema_version != "1.0":

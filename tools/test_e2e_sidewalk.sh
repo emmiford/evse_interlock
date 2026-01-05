@@ -34,14 +34,44 @@ print(data.get("device_id", ""))
 PY
 "${PAYLOAD_JSON}")"
 
+EVENT_ID="$(python3 - <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], "r", encoding="utf-8") as f:
+    data = json.load(f)
+print(data.get("event_id", ""))
+PY
+"${PAYLOAD_JSON}")"
+
+TIMESTAMP_MS="$(python3 - <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], "r", encoding="utf-8") as f:
+    data = json.load(f)
+print(data.get("timestamp", ""))
+PY
+"${PAYLOAD_JSON}")"
+
 if [[ -z "${DEVICE_ID}" ]]; then
   echo "FAIL: device_id not found in payload" >&2
+  exit 1
+fi
+if [[ -z "${EVENT_ID}" ]]; then
+  echo "FAIL: event_id not found in payload" >&2
+  exit 1
+fi
+if [[ -z "${TIMESTAMP_MS}" ]]; then
+  echo "FAIL: timestamp not found in payload" >&2
   exit 1
 fi
 
 python3 "${ROOT_DIR}/tools/e2e_verify_dynamodb.py" \
   --device-id "${DEVICE_ID}" \
   --run-id "${RUN_ID}" \
+  --event-id "${EVENT_ID}" \
+  --since-ms "$((TIMESTAMP_MS - 600000))" \
   --region "${REGION}" \
   --table "${PROJECT_PREFIX}-device_events_v2"
 echo "PASS: ${SCRIPT_NAME}"
