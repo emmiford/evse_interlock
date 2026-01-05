@@ -146,7 +146,7 @@ Layer 0C -- HIL Safety Invariant Verification:
 - Every PR (CI): `tools/test_zephyr_linux.sh` (Layer 0B included)
 - Before release/hardware change: `tools/test_hil_gpio.sh`
 - Before demo/deployment: `tools/test_e2e_sidewalk.sh`
-- Cloud-only checks: `tools/sidewalk_v1_e2e_cloud_verify.sh`
+- Cloud-only checks: `tools/aws/setup_v1/sidewalk_v1_e2e_cloud_verify.sh`
 
 ### JSON Schema Stability
 

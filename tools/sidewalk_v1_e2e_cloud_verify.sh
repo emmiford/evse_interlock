@@ -16,10 +16,10 @@ if [[ -z "$DEVICE_ID" ]]; then
 fi
 
 echo "== Step 1: publish + verify DynamoDB v2 =="
-bash tools/sidewalk_v1_publish_verify_endpoint.sh
+bash tools/aws/setup_v1/sidewalk_v1_publish_verify_endpoint.sh
 
 echo "== Step 2: verify S3 archive write =="
-bash tools/sidewalk_v1_verify_archive_s3.sh
+bash tools/aws/setup_v1/sidewalk_v1_verify_archive_s3.sh
 
 echo "== Step 3: idempotency check =="
 bash tools/e2e_idempotency_check.sh
