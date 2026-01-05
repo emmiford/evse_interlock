@@ -25,7 +25,14 @@ def main():
     run_id = None
 
     with open(args.logfile, "w", encoding="utf-8") as out:
-        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+        proc = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+        )
         try:
             while time.time() - start < args.timeout:
                 line = proc.stdout.readline()
