@@ -101,6 +101,9 @@ If E2E fails due to permissions, ensure you can run:
 aws iot describe-endpoint --endpoint-type iot:Data-ATS --region us-east-1
 ```
 
+Note: E2E requires hardware + Sidewalk connectivity; when hardware is not available,
+skip the live run and rely on code review plus unit/Zephyr tests.
+
 ## Where to look when failures happen
 - Unit tests: `build-tests/host/`.
 - Zephyr tests: `build-tests/gpio_event/zephyr/`, `build-tests/telemetry/zephyr/`.

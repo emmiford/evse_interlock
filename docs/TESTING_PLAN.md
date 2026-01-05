@@ -126,6 +126,8 @@ Layer 0C -- HIL Safety Invariant Verification:
 
 - Runs on: hardware + AWS account
 - Command: `tools/test_e2e_sidewalk.sh`
+- Note: If hardware is unavailable, skip the live E2E run; rely on code review
+  plus unit/Zephyr test coverage until hardware access is restored.
 - Acceptance checks:
   - MQTT receives message on `sidewalk/#`
   - Payload includes required fields
