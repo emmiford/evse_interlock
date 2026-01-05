@@ -22,7 +22,7 @@ echo "== Step 2: verify S3 archive write =="
 bash tools/aws/setup_v1/sidewalk_v1_verify_archive_s3.sh
 
 echo "== Step 3: idempotency check =="
-bash tools/e2e_idempotency_check.sh
+bash tests/e2e_idempotency_check.sh
 
 echo "== E2E cloud verification complete =="
 echo "PASS: ${SCRIPT_NAME}"

@@ -26,5 +26,5 @@ west build -p always -d "${BUILD_DIR}" -b rak4631 "${APP_DIR}" -- \
 west flash --runner pyocd --build-dir "${BUILD_DIR}" -- \
   --target nrf52840 --dev-id "${PROBE_ID}"
 
-python3 "${ROOT_DIR}/tools/test_hil_gpio.py" --probe "${PROBE_ID}" --timeout 40 --outfile "${LOG_FILE}" "${EXTRA_ARGS[@]}"
+python3 "${ROOT_DIR}/tests/test_hil_gpio.py" --probe "${PROBE_ID}" --timeout 40 --outfile "${LOG_FILE}" "${EXTRA_ARGS[@]}"
 echo "PASS: ${SCRIPT_NAME}"

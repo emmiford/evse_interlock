@@ -19,10 +19,10 @@ west build -p always -d "${BUILD_DIR}" -b rak4631 "${APP_DIR}" -- \
 west flash --runner pyocd --build-dir "${BUILD_DIR}" -- \
   --target nrf52840 --dev-id "${PROBE_ID}"
 
-RUN_ID="$(python3 "${ROOT_DIR}/tools/capture_rtt_run_id.py" --probe "${PROBE_ID}" --timeout 40 --logfile "${RTT_LOG}")"
+RUN_ID="$(python3 "${ROOT_DIR}/tests/capture_rtt_run_id.py" --probe "${PROBE_ID}" --timeout 40 --logfile "${RTT_LOG}")"
 echo "run_id=${RUN_ID}"
 
-python3 "${ROOT_DIR}/tools/mqtt_wait_for_run_id.py" --run-id "${RUN_ID}" --timeout 90 --outfile "${PAYLOAD_JSON}"
+python3 "${ROOT_DIR}/tests/mqtt_wait_for_run_id.py" --run-id "${RUN_ID}" --timeout 90 --outfile "${PAYLOAD_JSON}"
 
 DEVICE_ID="$(python3 - <<'PY'
 import json
@@ -67,7 +67,7 @@ if [[ -z "${TIMESTAMP_MS}" ]]; then
   exit 1
 fi
 
-python3 "${ROOT_DIR}/tools/e2e_verify_dynamodb.py" \
+python3 "${ROOT_DIR}/tests/e2e_verify_dynamodb.py" \
   --device-id "${DEVICE_ID}" \
   --run-id "${RUN_ID}" \
   --event-id "${EVENT_ID}" \

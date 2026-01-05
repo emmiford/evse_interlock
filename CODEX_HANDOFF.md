@@ -58,13 +58,13 @@
 - Destination: `SensorAppDestination`
 - IoT Core topic: `sidewalk/app_data`
 - E2E verification uses MQTT subscribe to `sidewalk/app_data` via `awsiotsdk`:
-  - `tools/mqtt_wait_for_run_id.py`
+  - `tests/mqtt_wait_for_run_id.py`
 
 7) Test plan status: implemented vs pending
 - Implemented:
   - Unit tests (host): `sidewalk/samples/sid_end_device/tests/gpio_event` (ztest)
-  - HIL test: `tools/test_hil_gpio.sh` + `tools/test_hil_gpio.py`
-  - E2E test: `tools/test_e2e_sidewalk.sh`
+  - HIL test: `tests/test_hil_gpio.sh` + `tests/test_hil_gpio.py`
+  - E2E test: `tests/test_e2e_sidewalk.sh`
   - Test plan doc: `sidewalk/samples/sid_end_device/TESTING.md`
 - Pending:
   - Run unit/HIL/E2E tests to confirm in this environment.
@@ -88,12 +88,12 @@
   - `sidewalk/samples/sid_end_device/tests/gpio_event/prj.conf`
   - `sidewalk/samples/sid_end_device/tests/gpio_event/src/main.c`
   - `sidewalk/samples/sid_end_device/TESTING.md`
-  - `tools/test_unit_host.sh`
-  - `tools/test_hil_gpio.sh`
-  - `tools/test_hil_gpio.py`
-  - `tools/capture_rtt_run_id.py`
-  - `tools/mqtt_wait_for_run_id.py`
-  - `tools/test_e2e_sidewalk.sh`
+  - `tests/test_unit_host.sh`
+  - `tests/test_hil_gpio.sh`
+  - `tests/test_hil_gpio.py`
+  - `tests/capture_rtt_run_id.py`
+  - `tests/mqtt_wait_for_run_id.py`
+  - `tests/test_e2e_sidewalk.sh`
 - Edited:
   - `sidewalk/samples/sid_end_device/src/hello/app.c`
   - `sidewalk/samples/sid_end_device/Kconfig`
@@ -137,17 +137,17 @@
   - Static partition layout for RAK4631 build (created earlier in session).
 - `/Users/jan/dev/sidewalk-workspace/tools/sidewalk_build_flash.sh`
   - Updated build/flash/provision flow and probe handling (created/edited earlier).
-- `/Users/jan/dev/sidewalk-workspace/tools/test_unit_host.sh`
+- `/Users/jan/dev/sidewalk-workspace/tests/test_unit_host.sh`
   - Host unit-test runner (west native_posix).
-- `/Users/jan/dev/sidewalk-workspace/tools/test_hil_gpio.sh`
+- `/Users/jan/dev/sidewalk-workspace/tests/test_hil_gpio.sh`
   - HIL build/flash + RTT assert runner.
-- `/Users/jan/dev/sidewalk-workspace/tools/test_hil_gpio.py`
+- `/Users/jan/dev/sidewalk-workspace/tests/test_hil_gpio.py`
   - Parses RTT output for GPIO event + send ok.
-- `/Users/jan/dev/sidewalk-workspace/tools/capture_rtt_run_id.py`
+- `/Users/jan/dev/sidewalk-workspace/tests/capture_rtt_run_id.py`
   - Captures `run_id` from RTT log for E2E.
-- `/Users/jan/dev/sidewalk-workspace/tools/mqtt_wait_for_run_id.py`
+- `/Users/jan/dev/sidewalk-workspace/tests/mqtt_wait_for_run_id.py`
   - MQTT (awsiotsdk) subscriber to confirm AWS receipt of `run_id`.
-- `/Users/jan/dev/sidewalk-workspace/tools/test_e2e_sidewalk.sh`
+- `/Users/jan/dev/sidewalk-workspace/tests/test_e2e_sidewalk.sh`
   - Automated E2E run: build/flash, capture run_id, verify AWS receipt.
 - `/Users/jan/dev/sidewalk-workspace/CODEX_HANDOFF.md`
   - This handoff document.

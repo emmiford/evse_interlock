@@ -62,7 +62,7 @@ Global acceptance criterion:
 Layer 0A -- Host Safety Invariant Tests:
 
 - Runs on: macOS + Linux (local dev), mandatory in CI
-- Command: `tools/test_unit_host.sh`
+- Command: `tests/test_unit_host.sh`
 - Scope:
   - AC=ON at boot => ev_allowed=false
   - AC toggles during debounce window => ev_allowed=false until stable OFF
@@ -76,14 +76,14 @@ Layer 0A -- Host Safety Invariant Tests:
 Layer 0B -- Zephyr Safety Invariant Tests:
 
 - Runs on: Linux only (CI or VM)
-- Command: `tools/test_zephyr_linux.sh` with `BOARD=native_posix`
+- Command: `tests/test_zephyr_linux.sh` with `BOARD=native_posix`
 - Scope: mirror Layer 0A cases under ztest to ensure Zephyr integration cannot
   bypass safety logic.
 
 Layer 0C -- HIL Safety Invariant Verification:
 
 - Runs on: real device + RTT/UART
-- Command: `tools/test_hil_gpio.sh`
+- Command: `tests/test_hil_gpio.sh`
 - Scope:
   - AC input held ON => EV output never enables
   - After reset => EV OFF until AC confirmed OFF and stable
@@ -95,7 +95,7 @@ Layer 0C -- HIL Safety Invariant Verification:
 ### 1. Unit Tests (Host)
 
 - Runs on: macOS + Linux (local dev), optional in CI
-- Command: `tools/test_unit_host.sh`
+- Command: `tests/test_unit_host.sh`
 - Scope:
   - gpio_event: debounce, edge detection, no-spam, transitions
   - telemetry: payload field correctness, schema stability
@@ -105,7 +105,7 @@ Layer 0C -- HIL Safety Invariant Verification:
 ### 2. Zephyr Integration Tests
 
 - Runs on: Linux only (CI or VM)
-- Command: `tools/test_zephyr_linux.sh` with `BOARD=native_posix`
+- Command: `tests/test_zephyr_linux.sh` with `BOARD=native_posix`
 - Scope:
   - ztests in `tests/gpio_event`, `tests/telemetry`, `tests/safety_gate`
   - Kconfig sanity (logging off, minimal heap)
@@ -113,7 +113,7 @@ Layer 0C -- HIL Safety Invariant Verification:
 ### 3. Hardware-in-the-Loop (HIL)
 
 - Runs on: real device + RTT/UART
-- Command: `tools/test_hil_gpio.sh`
+- Command: `tests/test_hil_gpio.sh`
 - Acceptance checks:
   - run_id appears in RTT logs
   - GPIO toggles => rising/falling edges logged
@@ -125,7 +125,7 @@ Layer 0C -- HIL Safety Invariant Verification:
 ### 4. End-to-End (AWS)
 
 - Runs on: hardware + AWS account
-- Command: `tools/test_e2e_sidewalk.sh`
+- Command: `tests/test_e2e_sidewalk.sh`
 - Note: If hardware is unavailable, skip the live E2E run; rely on code review
   plus unit/Zephyr test coverage until hardware access is restored.
 - Acceptance checks:
@@ -135,17 +135,17 @@ Layer 0C -- HIL Safety Invariant Verification:
   - TTL in epoch seconds (not milliseconds)
   - Idempotency check rejects duplicate event_id
 - Support scripts:
-  - `tools/e2e_verify_dynamodb.py` validates DynamoDB record fields + TTL
-  - `tools/e2e_idempotency_check.sh` validates conditional write behavior
+  - `tests/e2e_verify_dynamodb.py` validates DynamoDB record fields + TTL
+  - `tests/e2e_idempotency_check.sh` validates conditional write behavior
 
 ## Technical Requirements
 
 ### Test Execution Guidelines
 
-- Every commit (local): `tools/test_unit_host.sh`
-- Every PR (CI): `tools/test_zephyr_linux.sh` (Layer 0B included)
-- Before release/hardware change: `tools/test_hil_gpio.sh`
-- Before demo/deployment: `tools/test_e2e_sidewalk.sh`
+- Every commit (local): `tests/test_unit_host.sh`
+- Every PR (CI): `tests/test_zephyr_linux.sh` (Layer 0B included)
+- Before release/hardware change: `tests/test_hil_gpio.sh`
+- Before demo/deployment: `tests/test_e2e_sidewalk.sh`
 - Cloud-only checks: `tools/aws/setup_v1/sidewalk_v1_e2e_cloud_verify.sh`
 
 ### JSON Schema Stability

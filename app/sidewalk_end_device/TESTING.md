@@ -20,17 +20,17 @@ Note: RAK4631 DTS has no `gpio-keys`/`button0` aliases; reset is wired to nRESET
 ### Unit tests (host)
 - Focus: debounce, edge detection, telemetry payload formatting, no-spam behavior.
 - Command:
-  - `tools/test_unit_host.sh`
+  - `tests/test_unit_host.sh`
 
 ### Zephyr integration tests (native_posix)
 - Focus: Zephyr build + ztest execution for host integration.
 - Command:
-  - `tools/test_zephyr_linux.sh`
+  - `tests/test_zephyr_linux.sh`
 
 ### HIL tests (device + RTT)
 - Focus: deterministic GPIO events + Sidewalk send logs.
 - Command:
-  - `tools/test_hil_gpio.sh`
+  - `tests/test_hil_gpio.sh`
 - Modes:
   - `HIL_MODE=safety` to enforce asserted input (no deasserted events)
   - `HIL_MODE=signal` to validate loopback transition counts
@@ -42,7 +42,7 @@ Note: RAK4631 DTS has no `gpio-keys`/`button0` aliases; reset is wired to nRESET
 ### End-to-end AWS verification
 - Focus: payloads arriving on IoT Core topic `sidewalk/#`.
 - Command:
-  - `tools/test_e2e_sidewalk.sh`
+  - `tests/test_e2e_sidewalk.sh`
 - Requirements:
   - AWS credentials configured (`AWS_PROFILE` or default creds).
   - `awsiotsdk` installed:
@@ -50,8 +50,8 @@ Note: RAK4631 DTS has no `gpio-keys`/`button0` aliases; reset is wired to nRESET
 - Optional: `AWS_REGION` (defaults to `us-east-1`), `AWS_IOT_ENDPOINT` to override endpoint lookup.
   - Payloads include `schema_version`, `device_id`, `device_type`, `timestamp`, and `data.gpio`.
   - `timestamp` uses uptime until a time sync downlink is received.
-  - DynamoDB verification is done via `tools/e2e_verify_dynamodb.py`.
-  - Idempotency check uses `tools/e2e_idempotency_check.sh`.
+  - DynamoDB verification is done via `tests/e2e_verify_dynamodb.py`.
+  - Idempotency check uses `tests/e2e_idempotency_check.sh`.
 
 ### Time sync (optional)
 - Send a downlink payload: `{"cmd":"time_sync","epoch_ms":1704067200000}`
@@ -78,22 +78,22 @@ Note: RAK4631 DTS has no `gpio-keys`/`button0` aliases; reset is wired to nRESET
 
 ### Unit
 ```
-tools/test_unit_host.sh
+tests/test_unit_host.sh
 ```
 
 ### Zephyr integration (Linux)
 ```
-tools/test_zephyr_linux.sh
+tests/test_zephyr_linux.sh
 ```
 
 ### HIL
 ```
-tools/test_hil_gpio.sh
+tests/test_hil_gpio.sh
 ```
 
 ### E2E
 ```
-tools/test_e2e_sidewalk.sh
+tests/test_e2e_sidewalk.sh
 ```
 
 If E2E fails due to permissions, ensure you can run:
