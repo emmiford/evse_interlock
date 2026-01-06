@@ -1,0 +1,15 @@
+/ {
+	chosen {
+		zephyr,lora-transceiver = &lora;
+	};
+
+	aliases {
+		lora-transceiver = &lora;
+	};
+};
+
+arduino_spi: &spi1 {
+};
+
+lora_semtech_sx126xmb2xxs: &lora {
+};

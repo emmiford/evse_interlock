@@ -5,6 +5,16 @@ trap 'echo "FAIL: ${SCRIPT_NAME}" >&2' ERR
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BOARD="${BOARD:-native_posix}"
+SIDEWALK_PATCH="${SIDEWALK_PATCH:-$ROOT_DIR/app/evse_interlock_v1/patches/sidewalk-ble-off.patch}"
+
+if [[ -f "${SIDEWALK_PATCH}" ]]; then
+  if git -C "${ROOT_DIR}/sidewalk" apply --reverse --check "${SIDEWALK_PATCH}" >/dev/null 2>&1; then
+    echo "INFO: sidewalk patch already applied"
+  else
+    echo "INFO: applying sidewalk patch: ${SIDEWALK_PATCH}"
+    git -C "${ROOT_DIR}/sidewalk" apply "${SIDEWALK_PATCH}"
+  fi
+fi
 
 if [[ -n "${TESTS:-}" ]]; then
   IFS=" " read -r -a TESTS <<< "${TESTS}"

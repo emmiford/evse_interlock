@@ -12,6 +12,7 @@ PAYLOAD_JSON="${ROOT_DIR}/build/e2e_payload.json"
 REGION="${AWS_REGION:-us-east-1}"
 PROJECT_PREFIX="${PROJECT_PREFIX:-sidewalk-v1}"
 E2E_OVERLAY_CONFIG="${E2E_OVERLAY_CONFIG:-config/overlays/overlay-sidewalk_logging_v1.conf}"
+SIDEWALK_PATCH="${SIDEWALK_PATCH:-$APP_DIR/patches/sidewalk-ble-off.patch}"
 
 if pgrep -f "pyocd rtt" >/dev/null 2>&1; then
   echo "INFO: stopping existing pyocd rtt before flashing"
@@ -20,6 +21,15 @@ if pgrep -f "pyocd rtt" >/dev/null 2>&1; then
   if pgrep -f "pyocd rtt" >/dev/null 2>&1; then
     echo "FAIL: pyocd rtt is still running; stop it and retry" >&2
     exit 1
+  fi
+fi
+
+if [[ -f "${SIDEWALK_PATCH}" ]]; then
+  if git -C "${ROOT_DIR}/sidewalk" apply --reverse --check "${SIDEWALK_PATCH}" >/dev/null 2>&1; then
+    echo "INFO: sidewalk patch already applied"
+  else
+    echo "INFO: applying sidewalk patch: ${SIDEWALK_PATCH}"
+    git -C "${ROOT_DIR}/sidewalk" apply "${SIDEWALK_PATCH}"
   fi
 fi
 

@@ -14,7 +14,9 @@
 #include <json_printer/sidTypes2Json.h>
 #include <zephyr/logging/log.h>
 
+#if defined(CONFIG_BT) && defined(CONFIG_SIDEWALK_BLE)
 #include <bt_app_callbacks.h>
+#endif
 
 LOG_MODULE_REGISTER(app, CONFIG_SIDEWALK_LOG_LEVEL);
 
@@ -111,6 +113,7 @@ static void on_sidewalk_status_changed(const struct sid_status *status, void *co
 	}
 }
 
+#if defined(CONFIG_BT) && defined(CONFIG_SIDEWALK_BLE)
 static bool gatt_authorize(struct bt_conn *conn, const struct bt_gatt_attr *attr)
 {
 	struct bt_conn_info cinfo = {};
@@ -140,6 +143,7 @@ static const struct bt_gatt_authorization_cb gatt_authorization_callbacks = {
 	.read_authorize = gatt_authorize,
 	.write_authorize = gatt_authorize,
 };
+#endif
 
 #define MAX_TIME_SYNC_INTERVALS 10
 
@@ -174,17 +178,23 @@ void app_start(void)
 		.link_mask = persistent_link_mask,
 		.dev_ch = dev_ch,
 		.callbacks = &event_callbacks,
+#if defined(CONFIG_SIDEWALK_BLE)
 		.link_config = app_get_ble_config(),
+#else
+		.link_config = NULL,
+#endif
 		.sub_ghz_link_config = app_get_sub_ghz_config(),
 		.log_config = NULL,
 		.time_sync_config = &default_time_sync_config,
 	};
 
+#if defined(CONFIG_BT) && defined(CONFIG_SIDEWALK_BLE)
 	int err = bt_gatt_authorization_cb_register(&gatt_authorization_callbacks);
 	if (err) {
 		LOG_ERR("Registering GATT authorization callbacks failed (err %d)", err);
 		return;
 	}
+#endif
 
 	sidewalk_start(&sid_ctx);
 	sidewalk_event_send(sidewalk_event_platform_init, NULL, NULL);

@@ -10,6 +10,7 @@ PROBE_ID="${PROBE_ID:-0700000100120036470000124e544634a5a5a5a597969908}"
 LOG_FILE="${ROOT_DIR}/build/hil_gpio_rtt.log"
 HIL_MODE="${HIL_MODE:-basic}"
 EXPECTED_TRANSITIONS="${EXPECTED_TRANSITIONS:-6}"
+SIDEWALK_PATCH="${SIDEWALK_PATCH:-$APP_DIR/patches/sidewalk-ble-off.patch}"
 EXTRA_ARGS=()
 
 if [[ "${HIL_MODE}" == "signal" ]]; then
@@ -17,6 +18,15 @@ if [[ "${HIL_MODE}" == "signal" ]]; then
 fi
 if [[ "${HIL_MODE}" == "safety" ]]; then
   EXTRA_ARGS+=(--mode safety --require-ac-asserted)
+fi
+
+if [[ -f "${SIDEWALK_PATCH}" ]]; then
+  if git -C "${ROOT_DIR}/sidewalk" apply --reverse --check "${SIDEWALK_PATCH}" >/dev/null 2>&1; then
+    echo "INFO: sidewalk patch already applied"
+  else
+    echo "INFO: applying sidewalk patch: ${SIDEWALK_PATCH}"
+    git -C "${ROOT_DIR}/sidewalk" apply "${SIDEWALK_PATCH}"
+  fi
 fi
 
 west build -p always -d "${BUILD_DIR}" -b rak4631 "${APP_DIR}" -- \

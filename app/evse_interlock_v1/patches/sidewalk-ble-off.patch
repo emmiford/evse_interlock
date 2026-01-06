@@ -1,0 +1,55 @@
+diff --git a/Kconfig.dependencies b/Kconfig.dependencies
+index 0ecadcd..f53b2cc 100644
+--- a/Kconfig.dependencies
++++ b/Kconfig.dependencies
+@@ -36,7 +36,7 @@ config SIDEWALK_TFM_SUPPORT
+ 
+ config SIDEWALK_BLE
+ 	bool
+-	default SIDEWALK
++	default SIDEWALK && SIDEWALK_LINK_MASK_BLE
+ 	imply BT
+ 	imply BT_PERIPHERAL
+ 	imply BT_CTLR_CONN_RSSI
+diff --git a/subsys/config/common/CMakeLists.txt b/subsys/config/common/CMakeLists.txt
+index 643ff52..befaef5 100644
+--- a/subsys/config/common/CMakeLists.txt
++++ b/subsys/config/common/CMakeLists.txt
+@@ -6,7 +6,7 @@
+ 
+ zephyr_include_directories(include)
+ 
+-zephyr_library_sources_ifdef(CONFIG_SIDEWALK src/app_ble_config.c)
++zephyr_library_sources_ifdef(CONFIG_SIDEWALK_BLE src/app_ble_config.c)
+ 
+ if(CONFIG_SIDEWALK_SUBGHZ_SUPPORT)
+   zephyr_library_sources_ifdef(CONFIG_SIDEWALK_SUBGHZ_RADIO_SX126X src/app_subGHz_config_sx126x.c)
+diff --git a/subsys/config/common/src/app_subGHz_config_sx126x.c b/subsys/config/common/src/app_subGHz_config_sx126x.c
+index 2602d25..03582aa 100644
+--- a/subsys/config/common/src/app_subGHz_config_sx126x.c
++++ b/subsys/config/common/src/app_subGHz_config_sx126x.c
+@@ -121,10 +121,11 @@ static radio_sx126x_device_config_t radio_sx1262_cfg = {
+ 	.pa_cfg_callback = radio_sx1262_pa_cfg,
+ 
+ 	.tcxo = {
+-		.ctrl = DT_PROP(DT_NODELABEL(lora_semtech_sx126xmb2xxs), dio3_as_tcxo_control) ?
++		.ctrl = DT_NODE_HAS_PROP(DT_NODELABEL(lora_semtech_sx126xmb2xxs), dio3_tcxo_voltage) ?
+ 			SX126X_TCXO_CTRL_DIO3 : SX126X_TCXO_CTRL_NONE,
+-		.voltage = DT_PROP_OR(DT_NODELABEL(lora_semtech_sx126xmb2xxs), tcxo_voltage, SX126X_TCXO_CTRL_1_8V),
+-		.timeout = DT_PROP_OR(DT_NODELABEL(lora_semtech_sx126xmb2xxs), tcxo_wakeup_time, 0),
++		.voltage = DT_PROP_OR(DT_NODELABEL(lora_semtech_sx126xmb2xxs), dio3_tcxo_voltage,
++			SX126X_TCXO_CTRL_1_8V),
++		.timeout = DT_PROP_OR(DT_NODELABEL(lora_semtech_sx126xmb2xxs), tcxo_power_startup_delay_ms, 0),
+ 	},
+ 
+ 	.trim_cap_val_callback = radio_sx1262_trim_val,
+diff --git a/subsys/sal/sid_pal/src/CMakeLists.txt b/subsys/sal/sid_pal/src/CMakeLists.txt
+index 1d4a644..5e5cfed 100644
+--- a/subsys/sal/sid_pal/src/CMakeLists.txt
++++ b/subsys/sal/sid_pal/src/CMakeLists.txt
+@@ -73,4 +73,4 @@ zephyr_library_sources_ifdef(CONFIG_SIDEWALK sid_common.c)
+ 
+ zephyr_library_sources_ifdef(CONFIG_DEPRECATED_SIDEWALK_PAL_INIT pal_init.c)
+ 
+-zephyr_library_sources(bt_app_callbacks.c)
++zephyr_library_sources_ifdef(CONFIG_SIDEWALK_BLE bt_app_callbacks.c)

@@ -15,6 +15,7 @@ export ZEPHYR_TOOLCHAIN_VARIANT="${ZEPHYR_TOOLCHAIN_VARIANT:-zephyr}"
 PM_STATIC_YML="${PM_STATIC_YML:-$WORKSPACE/app/evse_interlock_v1/config/config/pm_static_rak4631_nrf52840.yml}"
 PROVISION_DIR="${PROVISION_DIR:-$WORKSPACE/sidewalk/tools/provision}"
 CERT_JSON="${CERT_JSON:-$WORKSPACE/.secrets/sidewalk/certificate.json}"
+SIDEWALK_PATCH="${SIDEWALK_PATCH:-$WORKSPACE/app/evse_interlock_v1/patches/sidewalk-ble-off.patch}"
 
 if [[ ! -f "$PM_STATIC_YML" ]]; then
   echo "Missing PM static file: $PM_STATIC_YML" >&2
@@ -24,6 +25,15 @@ fi
 if [[ ! -f "$CERT_JSON" ]]; then
   echo "Missing certificate.json: $CERT_JSON" >&2
   exit 1
+fi
+
+if [[ -f "$SIDEWALK_PATCH" ]]; then
+  if git -C "$WORKSPACE/sidewalk" apply --reverse --check "$SIDEWALK_PATCH" >/dev/null 2>&1; then
+    echo "INFO: sidewalk patch already applied"
+  else
+    echo "INFO: applying sidewalk patch: $SIDEWALK_PATCH"
+    git -C "$WORKSPACE/sidewalk" apply "$SIDEWALK_PATCH"
+  fi
 fi
 
 if pgrep -f "pyocd rtt" >/dev/null 2>&1; then
