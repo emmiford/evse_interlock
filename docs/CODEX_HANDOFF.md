@@ -32,7 +32,7 @@
   - `app/evse_interlock_v1/config/overlays/overlay-sidewalk_logging_v1.conf`
   - `CONFIG_SID_END_DEVICE_HELLO=y`
   - `CONFIG_SID_END_DEVICE_GPIO_EVENTS=y`
-  - `CONFIG_SID_END_DEVICE_GPIO_SIMULATOR=y` (test default)
+  - `CONFIG_SID_END_DEVICE_GPIO_SIMULATOR=y`
 
 4) Where the GPIO input code lives and which alias/pin it uses
 - Code: `app/evse_interlock_v1/src/main/app.c`
