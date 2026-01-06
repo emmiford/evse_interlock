@@ -2,7 +2,7 @@
 
 ## What input triggers E2E?
 - Trigger: simulator mode (no readable on-board button on RAK4631).
-- Alias: `extinput0` (defined in `app/evse_interlock_v1/boards/rak4631.overlay`).
+- Alias: `extinput0` (defined in `app/evse_interlock_v1/config/overlays/rak4631.overlay`).
 - Active level: active low (pull-up enabled in overlay).
 - Events per press: 2 (rising + falling) when using a real input; simulator toggles both edges.
 - E2E default: simulator mode with a unique `run_id` printed to UART and embedded in payloads.

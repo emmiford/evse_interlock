@@ -12,7 +12,7 @@ Docs index:
 
 2) Exact build + flash commands that work
 - Build:
-  - `tools/west_build_with_patch.sh -p always -d /Users/jan/dev/sidewalk-workspace/build -b rak4631 /Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1 -- -DOVERLAY_CONFIG=config/overlays/overlay-sidewalk_logging_v1.conf -DPM_STATIC_YML_FILE:FILEPATH=/Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1/config/config/pm_static_rak4631_nrf52840.yml -Dmcuboot_PM_STATIC_YML_FILE:FILEPATH=/Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1/config/config/pm_static_rak4631_nrf52840.yml`
+  - `tools/west_build_with_patch.sh -p always -d /Users/jan/dev/sidewalk-workspace/build -b rak4631 /Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1 -- -DOVERLAY_CONFIG=config/overlays/overlay-sidewalk_logging_v1.conf -DDTC_OVERLAY_FILE=config/overlays/rak4631.overlay -DPM_STATIC_YML_FILE:FILEPATH=/Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1/config/config/pm_static_rak4631_nrf52840.yml -Dmcuboot_PM_STATIC_YML_FILE:FILEPATH=/Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1/config/config/pm_static_rak4631_nrf52840.yml`
 - Flash app:
   - `west flash --runner pyocd --build-dir /Users/jan/dev/sidewalk-workspace/build -- --target nrf52840 --dev-id 0700000100120036470000124e544634a5a5a5a597969908`
 - Flash mfg (after provisioning):
@@ -50,7 +50,7 @@ Docs index:
   - `app/evse_interlock_v1/src/telemetry/gpio_event.h`
   - `app/evse_interlock_v1/src/telemetry/gpio_event.c`
 - Alias: `extinput0`
-- Alias definition: `app/evse_interlock_v1/boards/rak4631.overlay`
+- Alias definition: `app/evse_interlock_v1/config/overlays/rak4631.overlay`
 - Pin: `GPIO0.11` (active low, pull-up)
 
 5) How uplinks are sent (function names, files)
@@ -92,7 +92,7 @@ Docs index:
 - Created:
   - `app/evse_interlock_v1/src/telemetry/gpio_event.c`
   - `app/evse_interlock_v1/src/telemetry/gpio_event.h`
-  - `app/evse_interlock_v1/boards/rak4631.overlay`
+  - `app/evse_interlock_v1/config/overlays/rak4631.overlay`
   - `app/evse_interlock_v1/tests/telemetry/gpio_event/CMakeLists.txt`
   - `app/evse_interlock_v1/tests/telemetry/gpio_event/prj.conf`
   - `app/evse_interlock_v1/tests/telemetry/gpio_event/src/main.c`
@@ -131,7 +131,7 @@ Docs index:
   - Added `src/telemetry/gpio_event.c` to build.
 - `/Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1/config/overlays/overlay-sidewalk_logging_v1.conf`
   - Enabled GPIO events/simulator config for the hello variant.
-- `/Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1/boards/rak4631.overlay`
+- `/Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1/config/overlays/rak4631.overlay`
   - New `extinput0` GPIO alias for RAK4631 on GPIO0.11 (active low, pull-up).
 - `/Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1/tests/telemetry/gpio_event/*`
   - New ztest unit tests for debounce/edge/payload behavior (host-native).

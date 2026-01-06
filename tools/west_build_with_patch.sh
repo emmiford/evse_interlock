@@ -19,7 +19,7 @@ fi
 
 if [[ $# -eq 0 ]]; then
   echo "Usage: ${SCRIPT_NAME} <west build args...>" >&2
-  echo "Example: ${SCRIPT_NAME} -p always -d build -b rak4631 app/evse_interlock_v1 -- -DOVERLAY_CONFIG=config/overlays/overlay-sidewalk_logging_v1.conf" >&2
+  echo "Example: ${SCRIPT_NAME} -p always -d build -b rak4631 app/evse_interlock_v1 -- -DOVERLAY_CONFIG=config/overlays/overlay-sidewalk_logging_v1.conf -DDTC_OVERLAY_FILE=config/overlays/rak4631.overlay" >&2
   exit 2
 fi
 

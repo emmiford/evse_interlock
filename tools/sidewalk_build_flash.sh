@@ -6,6 +6,7 @@ trap 'echo "FAIL: ${SCRIPT_NAME}" >&2' ERR
 WORKSPACE="${WORKSPACE:-$HOME/dev/sidewalk-workspace}"
 BUILD_DIR="${BUILD_DIR:-$WORKSPACE/build}"
 OVERLAY_CONFIG="${OVERLAY_CONFIG:-config/overlays/overlay-sidewalk_logging_v1.conf}"
+BOARD_OVERLAY="${BOARD_OVERLAY:-config/overlays/rak4631.overlay}"
 BOARD="${BOARD:-rak4631}"
 MFG_ADDR="${MFG_ADDR:-0xFC000}"
 PROBE_ID="${PROBE_ID:-0700000100120036470000124e544634a5a5a5a597969908}"
@@ -59,6 +60,7 @@ echo "=== Build ==="
 pushd "$WORKSPACE" >/dev/null
 west build -p always -d "$BUILD_DIR" -b "$BOARD" "$WORKSPACE/app/evse_interlock_v1" -- \
   -DOVERLAY_CONFIG="$OVERLAY_CONFIG" \
+  -DDTC_OVERLAY_FILE="$BOARD_OVERLAY" \
   -DPM_STATIC_YML_FILE:FILEPATH="$PM_STATIC_YML" \
   -Dmcuboot_PM_STATIC_YML_FILE:FILEPATH="$PM_STATIC_YML"
 popd >/dev/null

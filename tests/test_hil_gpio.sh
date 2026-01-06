@@ -11,6 +11,7 @@ LOG_FILE="${ROOT_DIR}/build/hil_gpio_rtt.log"
 HIL_MODE="${HIL_MODE:-basic}"
 EXPECTED_TRANSITIONS="${EXPECTED_TRANSITIONS:-6}"
 SIDEWALK_PATCH="${SIDEWALK_PATCH:-$APP_DIR/patches/sidewalk-ble-off.patch}"
+BOARD_OVERLAY="${BOARD_OVERLAY:-config/overlays/rak4631.overlay}"
 EXTRA_ARGS=()
 
 if [[ "${HIL_MODE}" == "signal" ]]; then
@@ -31,7 +32,9 @@ fi
 
 west build -p always -d "${BUILD_DIR}" -b rak4631 "${APP_DIR}" -- \
   -DOVERLAY_CONFIG="config/overlays/overlay-sidewalk_logging_v1.conf" \
-  -DPM_STATIC_YML_FILE:FILEPATH="${APP_DIR}/config/config/pm_static_rak4631_nrf52840.yml"
+  -DDTC_OVERLAY_FILE="${BOARD_OVERLAY}" \
+  -DPM_STATIC_YML_FILE:FILEPATH="${APP_DIR}/config/config/pm_static_rak4631_nrf52840.yml" \
+  -Dmcuboot_PM_STATIC_YML_FILE:FILEPATH="${APP_DIR}/config/config/pm_static_rak4631_nrf52840.yml"
 
 west flash --runner pyocd --build-dir "${BUILD_DIR}" -- \
   --target nrf52840 --dev-id "${PROBE_ID}"

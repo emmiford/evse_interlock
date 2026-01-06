@@ -27,6 +27,7 @@ rm -rf /Users/jan/dev/sidewalk-workspace/build
 tools/west_build_with_patch.sh -p always -d /Users/jan/dev/sidewalk-workspace/build \
   -b rak4631 /Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1 -- \
   -DOVERLAY_CONFIG=config/overlays/overlay-sidewalk_logging_v1.conf \
+  -DDTC_OVERLAY_FILE=config/overlays/rak4631.overlay \
   -DPM_STATIC_YML_FILE:FILEPATH=/Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1/config/config/pm_static_rak4631_nrf52840.yml \
   -Dmcuboot_PM_STATIC_YML_FILE:FILEPATH=/Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1/config/config/pm_static_rak4631_nrf52840.yml
 
