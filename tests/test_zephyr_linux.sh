@@ -9,7 +9,7 @@ BOARD="${BOARD:-native_posix}"
 if [[ -n "${TESTS:-}" ]]; then
   IFS=" " read -r -a TESTS <<< "${TESTS}"
 else
-  TESTS=(gpio_event telemetry safety_gate)
+  TESTS=("telemetry/gpio_event" "telemetry/telemetry" "safety_gate")
 fi
 
 for test_name in "${TESTS[@]}"; do
@@ -17,11 +17,7 @@ for test_name in "${TESTS[@]}"; do
   BUILD_DIR="${ROOT_DIR}/build-tests/${test_name}"
 
   west build -p always -b "${BOARD}" -d "${BUILD_DIR}" "${TEST_DIR}"
-  if [[ -f "${BUILD_DIR}/${test_name}/build.ninja" ]]; then
-    west build -t run -d "${BUILD_DIR}/${test_name}"
-  else
-    west build -t run -d "${BUILD_DIR}"
-  fi
+  west build -t run -d "${BUILD_DIR}"
 done
 
 echo "PASS: ${SCRIPT_NAME}"

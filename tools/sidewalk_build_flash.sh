@@ -12,7 +12,7 @@ PROBE_ID="${PROBE_ID:-0700000100120036470000124e544634a5a5a5a597969908}"
 export ZEPHYR_SDK_INSTALL_DIR="${ZEPHYR_SDK_INSTALL_DIR:-$HOME/opt/zephyr-sdk-0.16.0}"
 export ZEPHYR_TOOLCHAIN_VARIANT="${ZEPHYR_TOOLCHAIN_VARIANT:-zephyr}"
 
-PM_STATIC_YML="${PM_STATIC_YML:-$WORKSPACE/app/evse_interlock_v1/config/pm_static/pm_static_rak4631_nrf52840.yml}"
+PM_STATIC_YML="${PM_STATIC_YML:-$WORKSPACE/app/evse_interlock_v1/config/board_specs/pm_static_rak4631_nrf52840.yml}"
 PROVISION_DIR="${PROVISION_DIR:-$WORKSPACE/sidewalk/tools/provision}"
 CERT_JSON="${CERT_JSON:-$WORKSPACE/.secrets/sidewalk/certificate.json}"
 
@@ -49,7 +49,8 @@ echo "=== Build ==="
 pushd "$WORKSPACE" >/dev/null
 west build -p always -d "$BUILD_DIR" -b "$BOARD" "$WORKSPACE/app/evse_interlock_v1" -- \
   -DOVERLAY_CONFIG="$OVERLAY_CONFIG" \
-  -DPM_STATIC_YML_FILE:FILEPATH="$PM_STATIC_YML"
+  -DPM_STATIC_YML_FILE:FILEPATH="$PM_STATIC_YML" \
+  -Dmcuboot_PM_STATIC_YML_FILE:FILEPATH="$PM_STATIC_YML"
 popd >/dev/null
 
 echo "=== Flash app (merged.hex) ==="

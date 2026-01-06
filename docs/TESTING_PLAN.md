@@ -100,14 +100,14 @@ Layer 0C -- HIL Safety Invariant Verification:
   - gpio_event: debounce, edge detection, no-spam, transitions
   - telemetry: payload field correctness, schema stability
 - Current implementation: custom test harness in
-  `app/evse_interlock_v1/tests/host/main.c`
+  `app/evse_interlock_v1/tests/telemetry/host/main.c`
 
 ### 2. Zephyr Integration Tests
 
 - Runs on: Linux only (CI or VM)
 - Command: `tests/test_zephyr_linux.sh` with `BOARD=native_posix`
 - Scope:
-  - ztests in `tests/gpio_event`, `tests/telemetry`, `tests/safety_gate`
+  - ztests in `tests/telemetry/gpio_event`, `tests/telemetry/telemetry`, `tests/safety_gate`
   - Kconfig sanity (logging off, minimal heap)
 
 ### 3. Hardware-in-the-Loop (HIL)

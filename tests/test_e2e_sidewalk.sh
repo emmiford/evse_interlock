@@ -11,6 +11,7 @@ RTT_LOG="${ROOT_DIR}/build/e2e_rtt.log"
 PAYLOAD_JSON="${ROOT_DIR}/build/e2e_payload.json"
 REGION="${AWS_REGION:-us-east-1}"
 PROJECT_PREFIX="${PROJECT_PREFIX:-sidewalk-v1}"
+E2E_OVERLAY_CONFIG="${E2E_OVERLAY_CONFIG:-config/overlays/overlay-sidewalk_logging_v1.conf;config/overlays/overlay-gpio-test.conf}"
 
 if pgrep -f "pyocd rtt" >/dev/null 2>&1; then
   echo "INFO: stopping existing pyocd rtt before flashing"
@@ -23,8 +24,9 @@ if pgrep -f "pyocd rtt" >/dev/null 2>&1; then
 fi
 
 west build -p always -d "${BUILD_DIR}" -b rak4631 "${APP_DIR}" -- \
-  -DOVERLAY_CONFIG="config/overlays/overlay-sidewalk_logging_v1.conf" \
-  -DPM_STATIC_YML_FILE:FILEPATH="${APP_DIR}/config/pm_static/pm_static_rak4631_nrf52840.yml"
+  -DOVERLAY_CONFIG="${E2E_OVERLAY_CONFIG}" \
+  -DPM_STATIC_YML_FILE:FILEPATH="${APP_DIR}/config/board_specs/pm_static_rak4631_nrf52840.yml" \
+  -Dmcuboot_PM_STATIC_YML_FILE:FILEPATH="${APP_DIR}/config/board_specs/pm_static_rak4631_nrf52840.yml"
 
 west flash --runner pyocd --build-dir "${BUILD_DIR}" -- \
   --target nrf52840 --dev-id "${PROBE_ID}"

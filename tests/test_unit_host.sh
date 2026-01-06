@@ -9,14 +9,14 @@ SRC_DIR="${ROOT_DIR}/app/evse_interlock_v1"
 
 mkdir -p "${BUILD_DIR}"
 
-cc -std=c11 -Wall -Wextra -I"${SRC_DIR}/include" -I"${SRC_DIR}/src" \
-  "${SRC_DIR}/src/gpio_event.c" \
-  "${SRC_DIR}/src/safety_gate.c" \
-  "${SRC_DIR}/src/time_sync.c" \
+cc -std=c11 -Wall -Wextra -I"${SRC_DIR}/src" \
+  "${SRC_DIR}/src/telemetry/gpio_event.c" \
+  "${SRC_DIR}/src/safety_gate/safety_gate.c" \
+  "${SRC_DIR}/src/sidewalk/time_sync.c" \
   "${SRC_DIR}/src/telemetry/telemetry_gpio.c" \
   "${SRC_DIR}/src/telemetry/telemetry_evse.c" \
-  "${SRC_DIR}/tests/host/main.c" \
-  "${SRC_DIR}/tests/host/telemetry_tests.c" \
+  "${SRC_DIR}/tests/telemetry/host/main.c" \
+  "${SRC_DIR}/tests/telemetry/host/telemetry_tests.c" \
   -o "${BUILD_DIR}/host_tests"
 
 "${BUILD_DIR}/host_tests"

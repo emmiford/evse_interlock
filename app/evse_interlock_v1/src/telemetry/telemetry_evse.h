@@ -8,7 +8,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "evse.h"
+#include "telemetry/evse.h"
 
 int telemetry_build_evse_payload(char *buf, size_t buf_len, const char *device_id,
 				 const char *device_type, int64_t timestamp_ms,

@@ -21,7 +21,7 @@ fi
 
 west build -p always -d "${BUILD_DIR}" -b rak4631 "${APP_DIR}" -- \
   -DOVERLAY_CONFIG="config/overlays/overlay-sidewalk_logging_v1.conf" \
-  -DPM_STATIC_YML_FILE:FILEPATH="${APP_DIR}/config/pm_static/pm_static_rak4631_nrf52840.yml"
+  -DPM_STATIC_YML_FILE:FILEPATH="${APP_DIR}/config/board_specs/pm_static_rak4631_nrf52840.yml"
 
 west flash --runner pyocd --build-dir "${BUILD_DIR}" -- \
   --target nrf52840 --dev-id "${PROBE_ID}"

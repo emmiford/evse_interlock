@@ -106,6 +106,6 @@ skip the live run and rely on code review plus unit/Zephyr tests.
 
 ## Where to look when failures happen
 - Unit tests: `build-tests/host/`.
-- Zephyr tests: `build-tests/gpio_event/zephyr/`, `build-tests/telemetry/zephyr/`.
+- Zephyr tests: `build-tests/telemetry/gpio_event/zephyr/`, `build-tests/telemetry/telemetry/zephyr/`.
 - HIL logs: `build/hil_gpio_rtt.log`.
 - E2E logs: `build/e2e_rtt.log`.

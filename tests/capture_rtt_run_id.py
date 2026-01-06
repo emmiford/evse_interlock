@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import subprocess
+import select
 import time
 import sys
 
@@ -35,6 +36,12 @@ def main():
         )
         try:
             while time.time() - start < args.timeout:
+                if not proc.stdout:
+                    break
+                ready, _, _ = select.select([proc.stdout], [], [], 0.2)
+                if not ready:
+                    time.sleep(0.1)
+                    continue
                 line = proc.stdout.readline()
                 if not line:
                     time.sleep(0.1)

@@ -8,7 +8,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "gpio_event.h"
+#include "telemetry/gpio_event.h"
 
 #define TELEMETRY_EVENT_ID_SUPPORTED 1
 

@@ -4,8 +4,8 @@
 #include <zephyr/ztest.h>
 #include <zephyr/sys/util.h>
 
-#include "safety_gate.h"
-#include "time_sync.h"
+#include "safety_gate/safety_gate.h"
+#include "sidewalk/time_sync.h"
 
 #if IS_ENABLED(CONFIG_LOG)
 #error "CONFIG_LOG must be disabled for safety_gate tests"
