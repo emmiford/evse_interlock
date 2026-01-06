@@ -11,8 +11,6 @@ choice SID_END_DEVICE
     default SID_END_DEVICE_HELLO
 config SID_END_DEVICE_HELLO
     bool "Sidewalk hello world application"
-config SID_END_DEVICE_DUT
-    bool "Device under test application"
 endchoice #SID_END_DEVICE
 
 if SID_END_DEVICE_HELLO

@@ -34,12 +34,6 @@ target_sources_ifdef(CONFIG_SIDEWALK_FILE_TRANSFER_DFU app PRIVATE
     src/sidewalk/sbdt/dfu_file_transfer.c
 )
 
-if(CONFIG_SID_END_DEVICE_DUT)
-    target_sources(app PRIVATE
-        src/test_mode/app.c
-    )
-else()
-    target_sources(app PRIVATE
-        src/main/app.c
-    )
-endif()
+target_sources(app PRIVATE
+    src/main/app.c
+)
