@@ -175,35 +175,6 @@ config SID_END_DEVICE_DEVICE_TYPE
 
 endif #SID_END_DEVICE_HELLO
 
-config SID_END_DEVICE_CLI
-    bool "Enable Sidewalk CLI (DUT)"
-    imply SHELL
-    help
-      Enables Sidewalk command line interface.
-      The interface commands are compatilbe with former dut sample.
-
-if SID_END_DEVICE_CLI
-
-config SHELL_CMD_BUFF_SIZE
-	default 1024
-
-config SHELL_STACK_SIZE
-	default 8192
-
-config SHELL_BACKEND_SERIAL_TX_RING_BUFFER_SIZE
-	default 128
-
-config SHELL_BACKEND_SERIAL_RX_RING_BUFFER_SIZE
-	default 1024
-
-config SID_END_DEVICE_CLI_ALIVE_MAKRER
-    bool "Enable alive marker"
-    help
-        Enable alive marker that periodically prints "alive" message to log.
-        Useful to verify that application is running and not stuck.
-
-endif # SID_END_DEVICE_CLI
-
 config SID_END_DEVICE_AUTO_START
     default y
     bool "Enable automatic Sidewalk initlization and start"
@@ -257,11 +228,9 @@ config SIDEWALK_FILE_TRANSFER_DFU
 
 config SIDEWALK_FILE_TRANSFER_SHELL
     bool "SBDT cli backend for file transfer"
-    imply SHELL
+    depends on n
     help
-        Use shell commands to controll file transfer.
-        This implementation does not save received data,
-        but allows user to controll the sbdt behaviour form shell.
+        Disabled: CLI backend removed from this application.
 
 endchoice
 
@@ -273,7 +242,7 @@ endif # SIDEWALK_FILE_TRANSFER
 
 config SIDEWALK_LOCATION_SHELL
     bool "Enable Sidewalk Location CLI"
-    depends on SID_END_DEVICE_CLI
+    depends on n
     help
         Enables Sidewalk location and dult command line interface.
         Provides commands for location services and unwanted location tracking.
@@ -319,17 +288,5 @@ config PSA_USE_CC3XX_KEY_MANAGEMENT_DRIVER
 	default n if SOC_NRF52840 || SOC_NRF5340_CPUAPP
 
 endif #SIDEWALK_CRYPTO
-
-if SHELL
-# TODO: Remove when merged in NCS copy of sdk-zephyr https://github.com/zephyrproject-rtos/zephyr/pull/85790
-# Workaround for missing first few logs.
-    config LOG_BACKEND_RTT
-        bool "Segger J-Link RTT backend"
-        depends on USE_SEGGER_RTT
-        default y if !SHELL_LOG_BACKEND
-        default n
-endif #SHELL
-
-
 
 source "Kconfig.zephyr"

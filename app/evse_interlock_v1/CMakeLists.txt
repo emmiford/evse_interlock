@@ -43,22 +43,3 @@ else()
         src/main/app.c
     )
 endif()
-
-if(CONFIG_SID_END_DEVICE_CLI)
-    target_sources(app PRIVATE
-        src/test_mode/app_dut.c
-        src/test_mode/app_shell.c
-    )
-    target_sources_ifdef(CONFIG_SIDEWALK_FILE_TRANSFER_SHELL app PRIVATE
-        src/test_mode/sbdt_shell.c
-        src/test_mode/sbdt_shell_events.c
-        src/test_mode/sbdt_shell_file_transfer.c
-    )
-    target_sources_ifdef(CONFIG_SIDEWALK_ON_DEV_CERT app PRIVATE 
-        src/test_mode/sid_on_dev_cert_cli.c
-    )
-    target_sources_ifdef(CONFIG_SIDEWALK_LOCATION_SHELL app PRIVATE
-        src/test_mode/location_shell.c
-        src/test_mode/location_shell_events.c
-    )
-endif()
