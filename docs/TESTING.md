@@ -26,6 +26,7 @@ Note: RAK4631 DTS has no `gpio-keys`/`button0` aliases; reset is wired to nRESET
 - Focus: Zephyr build + ztest execution for host integration.
 - Command:
   - `tests/test_zephyr_linux.sh`
+  - Note: Upstream Sidewalk/NCS unit tests that rely on CMock are not run here; the `test/` directory was removed to keep the repo lean.
 
 ### HIL tests (device + RTT)
 - Focus: deterministic GPIO events + Sidewalk send logs.
