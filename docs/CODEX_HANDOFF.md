@@ -65,7 +65,7 @@
   - Unit tests (host): `app/evse_interlock_v1/tests/telemetry/host`
   - HIL test: `tests/test_hil_gpio.sh` + `tests/test_hil_gpio.py`
   - E2E test: `tests/test_e2e_sidewalk.sh`
-  - Test plan doc: `app/evse_interlock_v1/docs/TESTING.md`
+  - Test plan doc: `docs/TESTING.md`
 - Pending:
   - Run unit/HIL/E2E tests to confirm in this environment.
   - Optional: switch from simulator to real GPIO input wiring.
@@ -87,7 +87,7 @@
   - `app/evse_interlock_v1/tests/telemetry/gpio_event/CMakeLists.txt`
   - `app/evse_interlock_v1/tests/telemetry/gpio_event/prj.conf`
   - `app/evse_interlock_v1/tests/telemetry/gpio_event/src/main.c`
-  - `app/evse_interlock_v1/docs/TESTING.md`
+  - `docs/TESTING.md`
   - `tests/test_unit_host.sh`
   - `tests/test_hil_gpio.sh`
   - `tests/test_hil_gpio.py`
@@ -127,7 +127,7 @@
   - New `extinput0` GPIO alias for RAK4631 on GPIO0.11 (active low, pull-up).
 - `/Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1/tests/telemetry/gpio_event/*`
   - New ztest unit tests for debounce/edge/payload behavior (host-native).
-- `/Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1/docs/TESTING.md`
+- `/Users/jan/dev/sidewalk-workspace/docs/TESTING.md`
   - Test plan and E2E trigger documentation.
 - `/Users/jan/dev/sidewalk-workspace/sidewalk/tools/provision/.gitignore`
   - Added `keys/` to ignore provisioning certs.
