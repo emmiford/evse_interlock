@@ -59,9 +59,9 @@ deploy_fn() {
       --zip-file "fileb://${zip}"
 }
 
-deploy_fn "${PROJECT_PREFIX}-hvac-energy-calc" tools/sidewalk_v1_lambdas/hvac_energy_calc.py hvac_energy_calc.lambda_handler
-deploy_fn "${PROJECT_PREFIX}-debug-query" tools/sidewalk_v1_lambdas/debug_query.py debug_query.lambda_handler
-deploy_fn "${PROJECT_PREFIX}-energy-aggregate" tools/sidewalk_v1_lambdas/energy_aggregate.py energy_aggregate.lambda_handler
+deploy_fn "${PROJECT_PREFIX}-hvac-energy-calc" tools/aws/sidewalk_v1_lambdas/hvac_energy_calc.py hvac_energy_calc.lambda_handler
+deploy_fn "${PROJECT_PREFIX}-debug-query" tools/aws/sidewalk_v1_lambdas/debug_query.py debug_query.lambda_handler
+deploy_fn "${PROJECT_PREFIX}-energy-aggregate" tools/aws/sidewalk_v1_lambdas/energy_aggregate.py energy_aggregate.lambda_handler
 
 echo "== Lambda deploy complete =="
 echo "PASS: ${SCRIPT_NAME}"

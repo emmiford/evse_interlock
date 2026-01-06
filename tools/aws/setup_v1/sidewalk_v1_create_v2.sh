@@ -79,7 +79,7 @@ aws --region "$REGION" iam put-role-policy \
   }" || true
 
 INGEST_ZIP="/tmp/ingest_device_events_v2.zip"
-zip -j "$INGEST_ZIP" tools/sidewalk_v1_lambdas/ingest_device_event.py >/dev/null
+zip -j "$INGEST_ZIP" tools/aws/sidewalk_v1_lambdas/ingest_device_event.py >/dev/null
 
 aws --region "$REGION" lambda create-function \
   --function-name "$INGEST_FN" \
@@ -119,7 +119,7 @@ aws --region "$REGION" lambda add-permission \
 
 echo "== Create archive Lambda for v2 stream =="
 LAMBDA_ZIP="/tmp/archive_device_events_v2.zip"
-zip -j "$LAMBDA_ZIP" tools/sidewalk_v1_lambdas/archive_device_events.py >/dev/null
+zip -j "$LAMBDA_ZIP" tools/aws/sidewalk_v1_lambdas/archive_device_events.py >/dev/null
 
 aws --region "$REGION" lambda create-function \
   --function-name "$ARCHIVE_FN" \
