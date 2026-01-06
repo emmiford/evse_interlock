@@ -6,6 +6,7 @@
 - Active level: active low (pull-up enabled in overlay).
 - Events per press: 2 (rising + falling) when using a real input; simulator toggles both edges.
 - E2E default: simulator mode with a unique `run_id` printed to UART and embedded in payloads.
+- Overlay config: `app/evse_interlock_v1/config/overlays/overlay-sidewalk_logging_v1.conf`
 
 Note: RAK4631 DTS has no `gpio-keys`/`button0` aliases; reset is wired to nRESET and is not a readable GPIO.
 
@@ -17,6 +18,42 @@ Note: RAK4631 DTS has no `gpio-keys`/`button0` aliases; reset is wired to nRESET
 | Zephyr Integration | Linux only | OS + drivers |
 | E2E | Hardware | System validation |
 
+## Safety Invariants (V1)
+
+Hard requirements:
+- AC asserted => EV OFF (no exceptions).
+- Any ambiguity => EV OFF (unknown input, invalid transition, timestamp anomaly,
+  queue overflow, missing init).
+- Boot/reset/brownout => EV OFF by default.
+
+Definitions:
+- AC asserted means `extinput0` reads logical high after Zephyr polarity.
+- EV OFF means `ev_allowed == false` and the enable GPIO is deasserted.
+
+Ambiguity cases (fail-safe):
+- Input unknown/uninitialized
+- Debounce invalid or out of range
+- Backward time detected
+- Queue overflow/dropped events
+- Any internal fault flag set
+
+## Test Layers (Safety Gate)
+
+Layer 0A -- Host safety invariants:
+- Runs on: macOS + Linux
+- Command: `tests/test_unit_host.sh`
+- Focus: AC on at boot, debounce ambiguity, backward time, queue overflow
+
+Layer 0B -- Zephyr safety invariants:
+- Runs on: Linux only (native_posix)
+- Command: `tests/test_zephyr_linux.sh`
+- Focus: same as 0A under Zephyr integration
+
+Layer 0C -- HIL safety invariants:
+- Runs on: device + RTT/UART
+- Command: `tests/test_hil_gpio.sh`
+- Focus: EV OFF when AC asserted; no allow during ambiguity
+
 ### Unit tests (host)
 - Focus: debounce, edge detection, telemetry payload formatting, no-spam behavior.
 - Command:
@@ -26,7 +63,7 @@ Note: RAK4631 DTS has no `gpio-keys`/`button0` aliases; reset is wired to nRESET
 - Focus: Zephyr build + ztest execution for host integration.
 - Command:
   - `tests/test_zephyr_linux.sh`
-  - Note: Upstream Sidewalk/NCS unit tests that rely on CMock are not run here; the `test/` directory was removed to keep the repo lean.
+- Note: Runs only on Linux (native_posix is not supported on macOS/Windows).
 
 ### HIL tests (device + RTT)
 - Focus: deterministic GPIO events + Sidewalk send logs.
@@ -57,12 +94,12 @@ Note: RAK4631 DTS has no `gpio-keys`/`button0` aliases; reset is wired to nRESET
 ### Time sync (optional)
 - Send a downlink payload: `{"cmd":"time_sync","epoch_ms":1704067200000}`
 - Device computes `epoch_at_boot_ms` and switches `timestamp` to epoch ms.
-- CLI alternative: `sid time_set <epoch_ms>` (if CLI enabled).
+- Note: CLI commands are not available (CLI sources removed).
 
 ### EVSE sampling (optional)
 - Enable `CONFIG_SID_END_DEVICE_EVSE_ENABLED` and set GPIO/ADC mappings in Kconfig.
 - EVSE payloads are sent on pilot/proximity state changes.
-- CLI: `sid evse_read` prints pilot mv/state, duty cycle, current, and proximity.
+- Note: CLI commands are not available (CLI sources removed).
 
 ### EVSE bring-up checklist
 - TODO: Calibrate `EVSE_PILOT_SCALE_*` and `EVSE_PILOT_BIAS_MV`.
@@ -74,6 +111,38 @@ Note: RAK4631 DTS has no `gpio-keys`/`button0` aliases; reset is wired to nRESET
 ### Remaining project TODOs
 - TODO: Seed `device_config` table with real device parameters.
 - TODO: Validate end-to-end with the real Sidewalk device (not just test publishes).
+
+## Execution Guidelines
+
+- Every commit (local): `tests/test_unit_host.sh`
+- Every PR (CI/Linux): `tests/test_zephyr_linux.sh`
+- Before release/hardware change: `tests/test_hil_gpio.sh`
+- Before demo/deployment: `tests/test_e2e_sidewalk.sh`
+
+## Schema and Idempotency
+
+Required payload fields (current JSON):
+- `schema_version`, `device_id`, `timestamp`, `data.gpio`
+- `event_id` when available; duplicates must be rejected
+- `time_anomaly` when backward time was clamped
+
+DynamoDB idempotency:
+- Partition key = device_id, sort key = event_id
+- Conditional write must reject duplicate event_id
+
+## Timestamp Handling
+
+- Before time sync: `timestamp = uptime_ms`
+- After time sync: `timestamp = epoch_ms`
+- Backward time: clamp to last emitted, set `time_anomaly=true`, EV OFF
+
+## Test-to-Requirement Mapping (Lightweight)
+
+| Requirement | Host Test(s) | Zephyr Test(s) | HIL Test(s) |
+| --- | --- | --- | --- |
+| AC asserted => EV OFF | safety_gate host tests | safety_gate ztests | test_hil_gpio.sh (AC held ON) |
+| Ambiguity => EV OFF | host safety tests | safety_gate ztests | test_hil_gpio.sh |
+| Boot/reset => EV OFF | safety_gate host tests | safety_gate ztests | test_hil_gpio.sh |
 
 ## How to run each tier
 

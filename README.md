@@ -34,3 +34,10 @@ For security guidance, see `SECURITY.md`.
 
 - `app/evse_interlock_v1`: product-owned Sidewalk end-device app (formerly based on Sidewalk sample).
 - `sidewalk/`: upstream Sidewalk SDK submodule (kept pristine; no local edits).
+
+## Docs
+
+- Setup: `docs/SETUP.md`
+- Testing: `docs/TESTING.md`
+- Architecture: `docs/ARCHITECTURE.md`
+- Security: `docs/SECURITY.md`

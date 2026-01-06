@@ -5,9 +5,14 @@
 - Board target: `rak4631` (qualifier `nrf52840`)
 - Found in: `build/CMakeCache.txt` and `build/build_info.yml`
 
+Docs index:
+- Setup: `docs/SETUP.md`
+- Testing: `docs/TESTING.md`
+- Architecture: `docs/ARCHITECTURE.md`
+
 2) Exact build + flash commands that work
 - Build:
-  - `west build -p always -d /Users/jan/dev/sidewalk-workspace/build -b rak4631 /Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1 -- -DOVERLAY_CONFIG=config/overlays/overlay-sidewalk_logging_v1.conf -DPM_STATIC_YML_FILE:FILEPATH=/Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1/config/config/pm_static_rak4631_nrf52840.yml`
+  - `tools/west_build_with_patch.sh -p always -d /Users/jan/dev/sidewalk-workspace/build -b rak4631 /Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1 -- -DOVERLAY_CONFIG=config/overlays/overlay-sidewalk_logging_v1.conf -DPM_STATIC_YML_FILE:FILEPATH=/Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1/config/config/pm_static_rak4631_nrf52840.yml -Dmcuboot_PM_STATIC_YML_FILE:FILEPATH=/Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1/config/config/pm_static_rak4631_nrf52840.yml`
 - Flash app:
   - `west flash --runner pyocd --build-dir /Users/jan/dev/sidewalk-workspace/build -- --target nrf52840 --dev-id 0700000100120036470000124e544634a5a5a5a597969908`
 - Flash mfg (after provisioning):
@@ -33,11 +38,16 @@
   - `CONFIG_SID_END_DEVICE_HELLO=y`
   - `CONFIG_SID_END_DEVICE_GPIO_EVENTS=y`
   - `CONFIG_SID_END_DEVICE_GPIO_SIMULATOR=y`
+  - BLE is disabled in `app/evse_interlock_v1/prj.conf`
+  - Sidewalk BLE-off patch is applied at build time:
+    - `app/evse_interlock_v1/patches/sidewalk-ble-off.patch`
+    - `tools/west_build_with_patch.sh`
+    - `tools/sidewalk_build_flash.sh`
 
 4) Where the GPIO input code lives and which alias/pin it uses
 - Code: `app/evse_interlock_v1/src/main/app.c`
 - Pure logic module:
-  - `app/evse_interlock_v1/include/gpio_event.h`
+  - `app/evse_interlock_v1/src/telemetry/gpio_event.h`
   - `app/evse_interlock_v1/src/telemetry/gpio_event.c`
 - Alias: `extinput0`
 - Alias definition: `app/evse_interlock_v1/boards/rak4631.overlay`
@@ -74,16 +84,15 @@
 - RAK4631 DTS has no readable user button (`gpio-keys`); reset is nRESET only.
 - Simulator is enabled by default; disable with:
   - `CONFIG_SID_END_DEVICE_GPIO_SIMULATOR=n` in `config/overlays/overlay-sidewalk_logging_v1.conf`.
-- Codex sandbox write access currently limited to `/Users/jan/dev/st/STM32-Sidewalk-SDK`; writing under `/Users/jan/dev/sidewalk-workspace` requires approval in this session.
 - `awsiotsdk` required for E2E MQTT subscribe:
   - `python3 -m pip install awsiotsdk`
+- `tests/test_zephyr_linux.sh` only runs on Linux (native_posix).
 
 9) Files created/edited/deleted during this session
 - Created:
-  - `app/evse_interlock_v1/include/gpio_event.h`
   - `app/evse_interlock_v1/src/telemetry/gpio_event.c`
+  - `app/evse_interlock_v1/src/telemetry/gpio_event.h`
   - `app/evse_interlock_v1/boards/rak4631.overlay`
-  - `app/evse_interlock_v1/config/overlays/overlay-gpio-test.conf`
   - `app/evse_interlock_v1/tests/telemetry/gpio_event/CMakeLists.txt`
   - `app/evse_interlock_v1/tests/telemetry/gpio_event/prj.conf`
   - `app/evse_interlock_v1/tests/telemetry/gpio_event/src/main.c`
@@ -100,10 +109,11 @@
   - `app/evse_interlock_v1/config/overlays/overlay-sidewalk_logging_v1.conf`
   - `app/evse_interlock_v1/CMakeLists.txt`
   - `sidewalk/tools/provision/.gitignore` (added `keys/`)
-  - `sidewalk/doc/KNOWN_GOOD_SETUP.md`
+  - `docs/SETUP.md`
   - `tools/sidewalk_build_flash.sh`
 - Deleted:
-  - None by Codex (user removed build dirs in terminal earlier).
+  - `app/evse_interlock_v1/src/test_mode/app.c` (DUT variant removed)
+  - CLI sources in `app/evse_interlock_v1/src/test_mode/` (shell/CLI removed)
 
 ---
 ## Change log (detailed)
@@ -111,7 +121,7 @@
 ### Files changed/created and why
 - `/Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1/src/main/app.c`
   - Added GPIO change detection, debounce scheduling, simulator/test mode, run_id logging, and Sidewalk uplink send on state changes.
-- `/Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1/include/gpio_event.h`
+- `/Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1/src/telemetry/gpio_event.h`
   - New pure-logic interface for debounce/edge detection and payload building (unit-testable).
 - `/Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1/src/telemetry/gpio_event.c`
   - New pure-logic implementation for debounce/edge detection and payload formatting.
@@ -121,18 +131,14 @@
   - Added `src/telemetry/gpio_event.c` to build.
 - `/Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1/config/overlays/overlay-sidewalk_logging_v1.conf`
   - Enabled GPIO events/simulator config for the hello variant.
-- `/Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1/config/overlays/overlay-gpio-test.conf`
-  - New overlay to enable deterministic simulator test mode for HIL/E2E.
 - `/Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1/boards/rak4631.overlay`
   - New `extinput0` GPIO alias for RAK4631 on GPIO0.11 (active low, pull-up).
 - `/Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1/tests/telemetry/gpio_event/*`
   - New ztest unit tests for debounce/edge/payload behavior (host-native).
 - `/Users/jan/dev/sidewalk-workspace/docs/TESTING.md`
   - Test plan and E2E trigger documentation.
-- `/Users/jan/dev/sidewalk-workspace/sidewalk/tools/provision/.gitignore`
-  - Added `keys/` to ignore provisioning certs.
-- `/Users/jan/dev/sidewalk-workspace/sidewalk/doc/KNOWN_GOOD_SETUP.md`
-  - Recorded known-good setup/versions (created earlier in session).
+- `/Users/jan/dev/sidewalk-workspace/docs/SETUP.md`
+  - Consolidated setup/provisioning details.
 - `/Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1/config/config/pm_static_rak4631_nrf52840.yml`
   - Static partition layout for RAK4631 build (created earlier in session).
 - `/Users/jan/dev/sidewalk-workspace/tools/sidewalk_build_flash.sh`
@@ -152,16 +158,9 @@
 - `/Users/jan/dev/sidewalk-workspace/CODEX_HANDOFF.md`
   - This handoff document.
 
-### Git diff summary (sidewalk repo)
-```
-$ git -C /Users/jan/dev/sidewalk-workspace/sidewalk diff --stat
-samples/sid_end_device/CMakeLists.txt     |   1 +
-samples/sid_end_device/Kconfig            |  46 ++++++
-samples/sid_end_device/config/overlays/overlay-sidewalk_logging_v1.conf |   3 +
-samples/sid_end_device/src/hello/app.c    | 262 ++++++++++++++++++++++++++++++
-tools/provision/.gitignore                |   3 +-
-5 files changed, 314 insertions(+), 1 deletion(-)
-```
+### Sidewalk submodule state
+- Submodule is kept clean; BLE changes are applied at build time from:
+  - `/Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1/patches/sidewalk-ble-off.patch`
 
 ### Key snippets
 Payload format (from `gpio_event_build_payload`):
