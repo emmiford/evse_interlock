@@ -25,8 +25,8 @@ fi
 
 west build -p always -d "${BUILD_DIR}" -b rak4631 "${APP_DIR}" -- \
   -DOVERLAY_CONFIG="${E2E_OVERLAY_CONFIG}" \
-  -DPM_STATIC_YML_FILE:FILEPATH="${APP_DIR}/config/board_specs/pm_static_rak4631_nrf52840.yml" \
-  -Dmcuboot_PM_STATIC_YML_FILE:FILEPATH="${APP_DIR}/config/board_specs/pm_static_rak4631_nrf52840.yml"
+  -DPM_STATIC_YML_FILE:FILEPATH="${APP_DIR}/config/config/pm_static_rak4631_nrf52840.yml" \
+  -Dmcuboot_PM_STATIC_YML_FILE:FILEPATH="${APP_DIR}/config/config/pm_static_rak4631_nrf52840.yml"
 
 west flash --runner pyocd --build-dir "${BUILD_DIR}" -- \
   --target nrf52840 --dev-id "${PROBE_ID}"

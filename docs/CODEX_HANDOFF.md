@@ -7,7 +7,7 @@
 
 2) Exact build + flash commands that work
 - Build:
-  - `west build -p always -d /Users/jan/dev/sidewalk-workspace/build -b rak4631 /Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1 -- -DOVERLAY_CONFIG=config/overlays/overlay-sidewalk_logging_v1.conf -DPM_STATIC_YML_FILE:FILEPATH=/Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1/config/board_specs/pm_static_rak4631_nrf52840.yml`
+  - `west build -p always -d /Users/jan/dev/sidewalk-workspace/build -b rak4631 /Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1 -- -DOVERLAY_CONFIG=config/overlays/overlay-sidewalk_logging_v1.conf -DPM_STATIC_YML_FILE:FILEPATH=/Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1/config/config/pm_static_rak4631_nrf52840.yml`
 - Flash app:
   - `west flash --runner pyocd --build-dir /Users/jan/dev/sidewalk-workspace/build -- --target nrf52840 --dev-id 0700000100120036470000124e544634a5a5a5a597969908`
 - Flash mfg (after provisioning):
@@ -133,7 +133,7 @@
   - Added `keys/` to ignore provisioning certs.
 - `/Users/jan/dev/sidewalk-workspace/sidewalk/doc/KNOWN_GOOD_SETUP.md`
   - Recorded known-good setup/versions (created earlier in session).
-- `/Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1/config/board_specs/pm_static_rak4631_nrf52840.yml`
+- `/Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1/config/config/pm_static_rak4631_nrf52840.yml`
   - Static partition layout for RAK4631 build (created earlier in session).
 - `/Users/jan/dev/sidewalk-workspace/tools/sidewalk_build_flash.sh`
   - Updated build/flash/provision flow and probe handling (created/edited earlier).
