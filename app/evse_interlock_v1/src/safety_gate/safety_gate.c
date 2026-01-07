@@ -1,13 +1,19 @@
 /*
- * Safety gate helper for EV allow/deny decisions.
+ * [EVSE-LOGIC] Single authoritative EVSE safety gate for allow/deny decisions.
+ * [BOILERPLATE] Uses gpio_event debounce helper (typical Zephyr-style input conditioning).
+ * Safety contract: AC asserted/unknown, invalid debounce, timestamp anomalies, or queue
+ * overflow => EV OFF.
  */
 #include "safety_gate/safety_gate.h"
+
+/* BEGIN PROJECT CODE: EVSE interlock safety policy (no third-party logic below). */
 
 static bool debounce_valid(int64_t debounce_ms)
 {
 	return debounce_ms > 0 && debounce_ms <= SAFETY_GATE_MAX_DEBOUNCE_MS;
 }
 
+/* [BOILERPLATE] Init typical debounce + fault tracking state. */
 void safety_gate_init(struct safety_gate *gate, int64_t debounce_ms)
 {
 	if (!gate) {
@@ -27,6 +33,11 @@ void safety_gate_init(struct safety_gate *gate, int64_t debounce_ms)
 	gpio_event_init(&gate->ac_state, gate->debounce_valid ? debounce_ms : 0);
 }
 
+/*
+ * [EVSE-LOGIC] AUTHORITATIVE SAFETY GATE:
+ * AC asserted/unknown or any ambiguity => EV OFF. Only a stable, debounced AC OFF
+ * allows EV ON.
+ */
 void safety_gate_update_ac(struct safety_gate *gate, int ac_state, int64_t now_ms)
 {
 	if (!gate) {
@@ -46,6 +57,7 @@ void safety_gate_update_ac(struct safety_gate *gate, int ac_state, int64_t now_m
 
 	(void)gpio_event_update(&gate->ac_state, ac_state, now_ms, NULL);
 
+	/* [EVSE-LOGIC] "Stable OFF" is the only permissive state; anything else is unsafe. */
 	bool stable_off = gate->ac_state.initialized &&
 			  gate->ac_state.pending_state == 0 &&
 			  gate->ac_state.last_state == 0 &&
@@ -60,6 +72,7 @@ void safety_gate_update_ac(struct safety_gate *gate, int ac_state, int64_t now_m
 	gate->ev_allowed = true;
 }
 
+/* [EVSE-LOGIC] Timestamp clamp and anomaly flag feed the safety gate. */
 int64_t safety_gate_apply_timestamp(struct safety_gate *gate, int64_t timestamp_ms)
 {
 	if (!gate) {
@@ -77,6 +90,7 @@ int64_t safety_gate_apply_timestamp(struct safety_gate *gate, int64_t timestamp_
 	return timestamp_ms;
 }
 
+/* [EVSE-LOGIC] Queue overflow is treated as ambiguity -> EV OFF. */
 void safety_gate_set_queue_overflow(struct safety_gate *gate)
 {
 	if (!gate) {

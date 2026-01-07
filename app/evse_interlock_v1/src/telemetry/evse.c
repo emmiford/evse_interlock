@@ -1,5 +1,7 @@
 /*
- * EVSE sensing + state machine (J1772)
+ * [EVSE-LOGIC] EVSE sensing + J1772 pilot/proximity state machine.
+ * [BOILERPLATE] Zephyr ADC/GPIO setup and PWM ISR plumbing.
+ * Unique logic: pilot thresholds, session start/end detection, and energy accumulation.
  */
 #include "telemetry/evse.h"
 
@@ -63,6 +65,7 @@ static int64_t cycles_to_us(uint32_t cycles)
 	return (int64_t)k_cyc_to_us_floor64(cycles);
 }
 
+/* [BOILERPLATE] Typical ISR to capture PWM edges for duty-cycle calculation. */
 static void pwm_isr(const struct device *dev, struct gpio_callback *cb, uint32_t pins)
 {
 	ARG_UNUSED(dev);
@@ -104,6 +107,7 @@ static void log_gpio_mapping(const char *label, int port, int pin)
 	LOG_INF("%s GPIO: P%d.%02d", label, port, pin);
 }
 
+/* [EVSE-LOGIC] PWM duty cycle is a proxy for requested current. */
 static float pwm_get_duty_cycle(void)
 {
 	int64_t period = pwm_last_period_us;
@@ -114,6 +118,7 @@ static float pwm_get_duty_cycle(void)
 	return (float)high * 100.0f / (float)period;
 }
 
+/* [BOILERPLATE] Typical ADC channel read helper for Zephyr SAADC. */
 static int adc_read_channel(int channel, int16_t *out)
 {
 	struct adc_channel_cfg cfg = {
@@ -146,6 +151,7 @@ static int adc_read_channel(int channel, int16_t *out)
 	return 0;
 }
 
+/* [BOILERPLATE] Common raw ADC conversion helper. */
 static int adc_raw_to_mv(int16_t raw)
 {
 	int32_t mv = raw;
@@ -153,6 +159,7 @@ static int adc_raw_to_mv(int16_t raw)
 	return (int)mv;
 }
 
+/* [EVSE-LOGIC] Pilot voltage with scaling/bias to recover J1772 levels. */
 static int pilot_mv_from_adc(void)
 {
 	int16_t raw = 0;
@@ -165,6 +172,7 @@ static int pilot_mv_from_adc(void)
 	return scaled - EVSE_PILOT_BIAS_MV;
 }
 
+/* [EVSE-LOGIC] Current sensor scaling for energy estimation. */
 static float current_a_from_adc(void)
 {
 	int16_t raw = 0;
@@ -176,6 +184,7 @@ static float current_a_from_adc(void)
 	return (float)scaled / 1000.0f;
 }
 
+/* [EVSE-LOGIC] Map pilot millivolts to J1772 states with tolerance band. */
 static enum evse_pilot_state pilot_state_from_mv(int mv)
 {
 	if (mv >= 12000 - EVSE_PILOT_TOL_MV) {
@@ -218,6 +227,7 @@ char evse_pilot_state_to_char(enum evse_pilot_state state)
 
 static void session_id_new(void)
 {
+	/* [BOILERPLATE] Random session ID generation. */
 	uint32_t r[4] = {
 		sys_rand32_get(),
 		sys_rand32_get(),
@@ -283,13 +293,14 @@ bool evse_poll(struct evse_event *evt, int64_t timestamp_ms)
 		return false;
 	}
 
+	/* [EVSE-LOGIC] Snapshot of pilot/proximity/current for this sample. */
 	int pilot_mv = pilot_mv_from_adc();
 	enum evse_pilot_state state = pilot_state_from_mv(pilot_mv);
 	bool prox = gpio_pin_get(prox_gpio_dev, EVSE_PROX_PIN) > 0;
 	float current_a = current_a_from_adc();
 	float duty = pwm_get_duty_cycle();
 
-	/* energy accumulation during charge states */
+	/* [EVSE-LOGIC] Energy accumulation only while charging. */
 	if (last_energy_ts_ms > 0 && (state == EVSE_PILOT_C || state == EVSE_PILOT_D)) {
 		float dt_h = (float)(timestamp_ms - last_energy_ts_ms) / 3600000.0f;
 		float power_kw = (current_a * (float)EVSE_NOMINAL_VOLTAGE_V) / 1000.0f;
@@ -308,6 +319,7 @@ bool evse_poll(struct evse_event *evt, int64_t timestamp_ms)
 	evt->session_id = session_id[0] ? session_id : NULL;
 	evt->event_type = "state_change";
 
+	/* [EVSE-LOGIC] Session boundaries are defined by pilot transitions. */
 	if (state != last_pilot_state || prox != last_prox_state) {
 		evt->send = true;
 		if (last_pilot_state == EVSE_PILOT_A && state == EVSE_PILOT_B) {

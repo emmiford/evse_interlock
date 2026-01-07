@@ -3,6 +3,10 @@
  *
  * SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
  */
+/*
+ * [BOILERPLATE] Generic GPIO debounce/edge tracking state.
+ * Used by EVSE interlock and telemetry to avoid spurious transitions.
+ */
 #ifndef GPIO_EVENT_H
 #define GPIO_EVENT_H
 

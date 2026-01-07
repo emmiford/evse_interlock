@@ -1,5 +1,7 @@
 /*
- * EVSE sensing + state machine (J1772)
+ * [EVSE-LOGIC] EVSE sensing and J1772 state machine interface.
+ * [BOILERPLATE] Zephyr ADC/GPIO wiring and type definitions.
+ * Unique logic: pilot/proximity interpretation, session tracking, and energy tally.
  */
 #ifndef EVSE_H
 #define EVSE_H

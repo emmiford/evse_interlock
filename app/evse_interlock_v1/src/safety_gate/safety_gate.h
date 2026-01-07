@@ -1,3 +1,8 @@
+/*
+ * [EVSE-LOGIC] EVSE interlock safety gate API and fault model.
+ * [BOILERPLATE] Uses generic debounce state from gpio_event for input conditioning.
+ * Safety contract: any ambiguity or fault forces ev_allowed=false.
+ */
 #ifndef SAFETY_GATE_H
 #define SAFETY_GATE_H
 
@@ -17,6 +22,7 @@ enum safety_fault_flags {
 	SAFETY_FAULT_INVALID_INPUT = 1 << 4,
 };
 
+/* [EVSE-LOGIC] Single authoritative safety gate for EV allow/deny decisions. */
 struct safety_gate {
 	struct gpio_event_state ac_state;
 	bool ev_allowed;

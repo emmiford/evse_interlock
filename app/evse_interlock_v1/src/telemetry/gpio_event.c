@@ -3,7 +3,13 @@
  *
  * SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
  */
+/*
+ * [BOILERPLATE] Generic debounce/edge detector (no EVSE-specific semantics).
+ * This is reusable glue that feeds EVSE safety gating and telemetry.
+ */
 #include "telemetry/gpio_event.h"
+
+/* BEGIN PROJECT CODE: debounce + edge tracking logic. */
 
 void gpio_event_init(struct gpio_event_state *st, int64_t debounce_ms)
 {
@@ -28,6 +34,7 @@ static gpio_edge_t gpio_event_edge(int prev, int now)
 	return GPIO_EDGE_UNKNOWN;
 }
 
+/* [BOILERPLATE] Typical debounce flow: pending state + elapsed time. */
 gpio_edge_t gpio_event_update(struct gpio_event_state *st, int state, int64_t now_ms,
 			      bool *changed)
 {
