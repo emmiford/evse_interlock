@@ -1,5 +1,7 @@
 /*
- * Safety gate ztests (native_posix)
+ * [TEST] Safety gate ztests (native_posix).
+ * [EVSE-LOGIC] Verifies EV OFF defaults and ambiguity handling.
+ * [BOILERPLATE] ztest harness wiring.
  */
 #include <zephyr/ztest.h>
 #include <zephyr/sys/util.h>
@@ -13,6 +15,7 @@
 
 ZTEST(safety_gate, test_ac_on_at_boot)
 {
+	/* [EVSE-LOGIC] AC asserted at boot => EV OFF. */
 	struct safety_gate gate;
 
 	safety_gate_init(&gate, 50);
@@ -22,6 +25,7 @@ ZTEST(safety_gate, test_ac_on_at_boot)
 
 ZTEST(safety_gate, test_ac_toggle_debounce)
 {
+	/* [EVSE-LOGIC] Ambiguous transitions within debounce => EV OFF. */
 	struct safety_gate gate;
 
 	safety_gate_init(&gate, 50);
@@ -34,6 +38,7 @@ ZTEST(safety_gate, test_ac_toggle_debounce)
 
 ZTEST(safety_gate, test_ac_unknown)
 {
+	/* [EVSE-LOGIC] Unknown input is treated as a fault => EV OFF. */
 	struct safety_gate gate;
 
 	safety_gate_init(&gate, 50);
@@ -44,6 +49,7 @@ ZTEST(safety_gate, test_ac_unknown)
 
 ZTEST(safety_gate, test_timestamp_backward)
 {
+	/* [EVSE-LOGIC] Backward time is clamped and forces EV OFF. */
 	struct safety_gate gate;
 	int64_t ts;
 
@@ -58,6 +64,7 @@ ZTEST(safety_gate, test_timestamp_backward)
 
 ZTEST(safety_gate, test_queue_overflow)
 {
+	/* [EVSE-LOGIC] Queue overflow is a safety fault => EV OFF. */
 	struct safety_gate gate;
 
 	safety_gate_init(&gate, 50);
@@ -68,6 +75,7 @@ ZTEST(safety_gate, test_queue_overflow)
 
 ZTEST(safety_gate, test_invalid_debounce)
 {
+	/* [EVSE-LOGIC] Invalid debounce config forces EV OFF. */
 	struct safety_gate gate;
 
 	safety_gate_init(&gate, 0);
@@ -77,6 +85,7 @@ ZTEST(safety_gate, test_invalid_debounce)
 
 ZTEST(safety_gate, test_time_sync_backward_clamp)
 {
+	/* [TELEMETRY] time_sync clamps backward epoch updates. */
 	int64_t ts;
 
 	time_sync_init();

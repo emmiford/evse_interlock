@@ -1,5 +1,7 @@
 /*
- * Host unit tests (no Zephyr)
+ * [TEST] Host unit tests (no Zephyr).
+ * [EVSE-LOGIC] Safety gate invariants and time_sync behavior.
+ * [TELEMETRY] Payload schema sanity checks.
  */
 #include <assert.h>
 #include <string.h>
@@ -14,6 +16,7 @@ void test_telemetry_required_fields(void);
 void test_telemetry_golden_fixtures(void);
 static void test_gpio_debounce(void)
 {
+	/* [BOILERPLATE] Generic debounce behavior; not EVSE-specific. */
 	struct gpio_event_state st;
 	bool changed = false;
 
@@ -30,6 +33,7 @@ static void test_gpio_debounce(void)
 
 static void test_gpio_payloads(void)
 {
+	/* [TELEMETRY] Schema fields for GPIO event payloads. */
 	char buf[384];
 	int len = telemetry_build_gpio_payload(buf, sizeof(buf), "dev123", "evse",
 					       "extinput0", 1, GPIO_EDGE_RISING, 1234,
@@ -48,6 +52,7 @@ static void test_gpio_payloads(void)
 
 static void test_evse_payload(void)
 {
+	/* [TELEMETRY] EVSE payload fields match schema. */
 	char buf[384];
 	struct evse_event evt = {
 		.send = true,
@@ -73,6 +78,7 @@ static void test_evse_payload(void)
 
 static void test_safety_ac_on_at_boot(void)
 {
+	/* [EVSE-LOGIC] AC asserted at boot => EV OFF. */
 	struct safety_gate gate;
 
 	safety_gate_init(&gate, 50);
@@ -82,6 +88,7 @@ static void test_safety_ac_on_at_boot(void)
 
 static void test_safety_ac_toggle_debounce(void)
 {
+	/* [EVSE-LOGIC] Debounce ambiguity => EV OFF. */
 	struct safety_gate gate;
 
 	safety_gate_init(&gate, 50);
@@ -94,6 +101,7 @@ static void test_safety_ac_toggle_debounce(void)
 
 static void test_safety_ac_unknown(void)
 {
+	/* [EVSE-LOGIC] Unknown input => EV OFF + fault. */
 	struct safety_gate gate;
 
 	safety_gate_init(&gate, 50);
@@ -104,6 +112,7 @@ static void test_safety_ac_unknown(void)
 
 static void test_safety_timestamp_backward(void)
 {
+	/* [EVSE-LOGIC] Backward time clamps and disables EV. */
 	struct safety_gate gate;
 	int64_t ts;
 
@@ -118,6 +127,7 @@ static void test_safety_timestamp_backward(void)
 
 static void test_safety_queue_overflow(void)
 {
+	/* [EVSE-LOGIC] Queue overflow is treated as ambiguity. */
 	struct safety_gate gate;
 
 	safety_gate_init(&gate, 50);
@@ -128,6 +138,7 @@ static void test_safety_queue_overflow(void)
 
 static void test_safety_no_time_sync(void)
 {
+	/* [EVSE-LOGIC] No sync => EV OFF until stable state is proven. */
 	struct safety_gate gate;
 
 	safety_gate_init(&gate, 50);
@@ -138,6 +149,7 @@ static void test_safety_no_time_sync(void)
 
 static void test_safety_invalid_debounce(void)
 {
+	/* [EVSE-LOGIC] Invalid debounce config forces EV OFF. */
 	struct safety_gate gate;
 
 	safety_gate_init(&gate, 0);
@@ -149,6 +161,7 @@ static void test_safety_invalid_debounce(void)
 
 static void test_safety_null_pointers(void)
 {
+	/* [BOILERPLATE] Defensive null handling. */
 	struct safety_gate gate;
 
 	safety_gate_init(NULL, 50);
@@ -164,6 +177,7 @@ static void test_safety_null_pointers(void)
 
 static void test_time_sync_backward_clamp(void)
 {
+	/* [TELEMETRY] Time sync clamps backward epoch updates. */
 	int64_t ts;
 
 	time_sync_init();

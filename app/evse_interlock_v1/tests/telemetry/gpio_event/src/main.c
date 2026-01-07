@@ -1,11 +1,13 @@
 /*
- * GPIO event unit tests (host)
+ * [TEST] GPIO event unit tests (host).
+ * [BOILERPLATE] Debounce/edge detection harness validation.
  */
 #include <zephyr/ztest.h>
 #include "telemetry/gpio_event.h"
 
 ZTEST(gpio_event, test_debounce)
 {
+	/* [BOILERPLATE] Debounce timing behavior. */
 	struct gpio_event_state st;
 	bool changed = false;
 
@@ -25,6 +27,7 @@ ZTEST(gpio_event, test_debounce)
 
 ZTEST(gpio_event, test_edge_detection)
 {
+	/* [BOILERPLATE] Edge transitions from debounced state changes. */
 	struct gpio_event_state st;
 	bool changed = false;
 
@@ -44,6 +47,7 @@ ZTEST(gpio_event, test_edge_detection)
 
 ZTEST(gpio_event, test_no_spam_same_state)
 {
+	/* [BOILERPLATE] No repeat edge when state is stable. */
 	struct gpio_event_state st;
 	bool changed = false;
 

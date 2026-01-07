@@ -1,5 +1,6 @@
 /*
- * Telemetry payload unit tests (host)
+ * [TEST] Telemetry payload unit tests (host).
+ * [TELEMETRY] Schema field presence checks.
  */
 #include <zephyr/ztest.h>
 #include <string.h>
@@ -9,6 +10,7 @@
 
 ZTEST(telemetry, test_gpio_payload_rising)
 {
+	/* [TELEMETRY] GPIO schema fields for rising edge. */
 	char buf[384];
 	int len = telemetry_build_gpio_payload(buf, sizeof(buf), "dev123", "evse",
 					       "extinput0", 1, GPIO_EDGE_RISING, 1234,
@@ -27,6 +29,7 @@ ZTEST(telemetry, test_gpio_payload_rising)
 
 ZTEST(telemetry, test_gpio_payload_falling)
 {
+	/* [TELEMETRY] GPIO schema fields for falling edge. */
 	char buf[384];
 	int len = telemetry_build_gpio_payload(buf, sizeof(buf), "dev123", "evse",
 					       "extinput0", 0, GPIO_EDGE_FALLING, 4321,
@@ -38,6 +41,7 @@ ZTEST(telemetry, test_gpio_payload_falling)
 
 ZTEST(telemetry, test_evse_payload_fields)
 {
+	/* [TELEMETRY] EVSE schema fields for pilot/proximity snapshot. */
 	char buf[384];
 	struct evse_event evt = {
 		.send = true,

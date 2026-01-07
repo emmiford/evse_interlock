@@ -1,5 +1,6 @@
 /*
- * Host telemetry schema/golden tests.
+ * [TEST] Host telemetry schema/golden tests.
+ * [TELEMETRY] Verifies schema_version and fixture fidelity.
  */
 #include <assert.h>
 #include <string.h>
@@ -15,6 +16,7 @@
 
 static void read_fixture(const char *name, char *buf, size_t buf_len)
 {
+	/* [BOILERPLATE] File IO helper for golden fixtures. */
 	char path[512];
 	FILE *fp;
 	size_t read_len;
@@ -32,6 +34,7 @@ static void read_fixture(const char *name, char *buf, size_t buf_len)
 
 void test_telemetry_required_fields(void)
 {
+	/* [TELEMETRY] Required fields and time_anomaly flag. */
 	char buf[384];
 	struct evse_event evt = {
 		.send = true,
@@ -67,6 +70,7 @@ void test_telemetry_required_fields(void)
 
 void test_telemetry_golden_fixtures(void)
 {
+	/* [TELEMETRY] Exact JSON formatting for known fixtures. */
 	char expected[512];
 	char actual[512];
 	int len;
