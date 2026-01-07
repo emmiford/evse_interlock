@@ -1,5 +1,6 @@
 /*
- * Telemetry payload builders
+ * [TELEMETRY] Public umbrella header for payload builders.
+ * [BOILERPLATE] Pure include aggregation.
  */
 #ifndef TELEMETRY_H
 #define TELEMETRY_H

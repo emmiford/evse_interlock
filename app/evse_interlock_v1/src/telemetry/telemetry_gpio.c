@@ -1,10 +1,12 @@
 /*
- * Telemetry payload builder for GPIO events
+ * [TELEMETRY] GPIO event payload builder and schema formatting.
+ * [BOILERPLATE] JSON formatting glue; semantics are in field choices.
  */
 #include "telemetry/telemetry_gpio.h"
 
 #include <stdio.h>
 
+/* [TELEMETRY] Default wrapper uses uptime_ms when epoch is not yet available. */
 int telemetry_build_gpio_payload(char *buf, size_t buf_len, const char *device_id,
 				 const char *device_type, const char *pin_alias, int state,
 				 gpio_edge_t edge, int64_t uptime_ms, const char *run_id,
@@ -26,7 +28,7 @@ int telemetry_build_gpio_payload_ex(char *buf, size_t buf_len, const char *devic
 
 	const char *edge_str = gpio_edge_str(edge);
 	int len = 0;
-	/* timestamp uses uptime_ms until we have a real epoch source */
+	/* [TELEMETRY] timestamp uses uptime_ms until a time_sync epoch is applied. */
 
 	if (run_id && run_id[0] != '\0') {
 		len = snprintf(buf, buf_len,

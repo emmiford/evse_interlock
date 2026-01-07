@@ -1,5 +1,6 @@
 /*
- * Telemetry payload builder for EVSE events
+ * [TELEMETRY] JSON payload schema for EVSE events.
+ * [EVSE-LOGIC] Schema reflects pilot/proximity/session semantics.
  */
 #ifndef TELEMETRY_EVSE_H
 #define TELEMETRY_EVSE_H

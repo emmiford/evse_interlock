@@ -1,5 +1,7 @@
 /*
- * Simple epoch time sync helper
+ * [TELEMETRY] Timestamp source selection and anomaly flagging.
+ * [BOILERPLATE] Small helper used by telemetry and safety tests.
+ * Semantics: uptime until a time_sync downlink; backwards time is clamped and flagged.
  */
 #ifndef TIME_SYNC_H
 #define TIME_SYNC_H

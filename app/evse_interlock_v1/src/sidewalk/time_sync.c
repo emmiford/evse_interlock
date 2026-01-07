@@ -1,13 +1,17 @@
 /*
- * Simple epoch time sync helper
+ * [TELEMETRY] Timestamp helper: uptime until epoch sync, clamp backward time.
+ * [BOILERPLATE] Minimal state holder used across app + tests.
  */
 #include "sidewalk/time_sync.h"
+
+/* BEGIN PROJECT CODE: timestamp semantics used by telemetry payloads. */
 
 static int64_t epoch_at_boot_ms;
 static bool time_synced;
 static int64_t last_timestamp_ms;
 static bool time_anomaly;
 
+/* [BOILERPLATE] Reset timestamp source and anomaly tracking. */
 void time_sync_init(void)
 {
 	epoch_at_boot_ms = 0;
@@ -16,6 +20,7 @@ void time_sync_init(void)
 	time_anomaly = false;
 }
 
+/* [TELEMETRY] Apply downlink epoch; record anomaly if it would move time backward. */
 void time_sync_apply_epoch_ms(int64_t epoch_ms, int64_t uptime_ms)
 {
 	if (last_timestamp_ms >= 0 && epoch_ms < last_timestamp_ms) {
@@ -27,6 +32,7 @@ void time_sync_apply_epoch_ms(int64_t epoch_ms, int64_t uptime_ms)
 	time_synced = true;
 }
 
+/* [TELEMETRY] Return monotonic timestamp; clamp backward jumps and flag time_anomaly. */
 int64_t time_sync_get_timestamp_ms(int64_t uptime_ms)
 {
 	int64_t ts_ms = time_synced ? (epoch_at_boot_ms + uptime_ms) : uptime_ms;

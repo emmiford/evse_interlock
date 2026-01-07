@@ -1,5 +1,6 @@
 /*
- * Telemetry payload builder for GPIO events
+ * [TELEMETRY] JSON payload schema for GPIO events.
+ * [BOILERPLATE] Formatting helpers; schema semantics are unique to this product.
  */
 #ifndef TELEMETRY_GPIO_H
 #define TELEMETRY_GPIO_H

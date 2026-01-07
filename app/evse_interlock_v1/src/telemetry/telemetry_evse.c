@@ -1,10 +1,12 @@
 /*
- * Telemetry payload builder for EVSE events
+ * [TELEMETRY] EVSE event payload builder and schema formatting.
+ * [EVSE-LOGIC] Field semantics follow J1772 pilot/proximity state machine.
  */
 #include "telemetry/telemetry_evse.h"
 
 #include <stdio.h>
 
+/* [BOILERPLATE] Convert enum to compact JSON-friendly pilot state. */
 static char telemetry_pilot_state_to_char(enum evse_pilot_state state)
 {
 	switch (state) {
@@ -33,6 +35,7 @@ int telemetry_build_evse_payload(char *buf, size_t buf_len, const char *device_i
 					       timestamp_ms, evt, event_id, false);
 }
 
+/* [TELEMETRY] Timestamp uses time_sync semantics; time_anomaly is explicit. */
 int telemetry_build_evse_payload_ex(char *buf, size_t buf_len, const char *device_id,
 				    const char *device_type, int64_t timestamp_ms,
 				    const struct evse_event *evt, const char *event_id,
