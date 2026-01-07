@@ -3,6 +3,10 @@
  *
  * SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
  */
+/*
+ * [3P-GLUE] Sidewalk SDK integration types and event wiring.
+ * THIRD-PARTY BOUNDARY - DO NOT MODIFY: signatures mirror Sidewalk SDK APIs.
+ */
 #ifndef SIDEWALK_APP_H
 #define SIDEWALK_APP_H
 

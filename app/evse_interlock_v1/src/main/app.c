@@ -3,6 +3,11 @@
  *
  * SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
  */
+/*
+ * [3P-GLUE] Sidewalk + Zephyr integration glue and callbacks.
+ * [BOILERPLATE] Typical app wiring (threads, timers, ISR, work queues).
+ * [TELEMETRY] Builds and sends GPIO/EVSE payloads.
+ */
 
 #include <state_notifier/state_notifier.h>
 #include "main/app.h"
@@ -65,6 +70,7 @@ static bool periodic_send_started;
 static bool app_sidewalk_ready;
 
 #if defined(CONFIG_SID_END_DEVICE_GPIO_EVENTS) && defined(CONFIG_GPIO)
+/* [BOILERPLATE] GPIO ingest plumbing: ISR/poll + debounce + telemetry send. */
 #if DT_NODE_EXISTS(DT_ALIAS(extinput0))
 #define APP_GPIO_HAS_DT 1
 static const struct gpio_dt_spec app_gpio = GPIO_DT_SPEC_GET(DT_ALIAS(extinput0), gpios);
@@ -99,6 +105,7 @@ static struct k_timer app_evse_timer;
 
 static uint32_t app_event_seq;
 
+/* [BOILERPLATE] Hardware read abstraction for GPIO event input. */
 static int app_gpio_read_state(void)
 {
 #if defined(CONFIG_SID_END_DEVICE_GPIO_SIMULATOR)
@@ -124,6 +131,7 @@ static int64_t app_get_timestamp_ms(void)
 	return time_sync_get_timestamp_ms(uptime_ms);
 }
 
+/* [BOILERPLATE] Event ID generator for telemetry correlation. */
 static void app_next_event_id(char *buf, size_t buf_len)
 {
 	uint32_t seq = ++app_event_seq;
@@ -138,6 +146,7 @@ static void app_next_event_id(char *buf, size_t buf_len)
 
 static void app_gpio_send_event(const char *pin_alias, int state, gpio_edge_t edge)
 {
+	/* [TELEMETRY] GPIO event payload construction + Sidewalk uplink. */
 	if (!app_sidewalk_ready) {
 		LOG_WRN("Sidewalk not ready; drop gpio event");
 		return;
@@ -174,6 +183,7 @@ static void app_gpio_send_event(const char *pin_alias, int state, gpio_edge_t ed
 #if defined(CONFIG_SID_END_DEVICE_EVSE_ENABLED)
 static void app_evse_send_event(const struct evse_event *evt, int64_t timestamp_ms)
 {
+	/* [TELEMETRY] EVSE event payload construction + Sidewalk uplink. */
 	if (!app_sidewalk_ready) {
 		LOG_WRN("Sidewalk not ready; drop evse event");
 		return;
@@ -221,6 +231,7 @@ static void app_evse_timer_handler(struct k_timer *timer)
 static void app_gpio_debounce_work_handler(struct k_work *work)
 {
 	ARG_UNUSED(work);
+	/* [BOILERPLATE] Work item to finish debounce and emit a single edge. */
 	int state = app_gpio_read_state();
 	if (state < 0) {
 		return;
@@ -234,6 +245,7 @@ static void app_gpio_debounce_work_handler(struct k_work *work)
 
 static void app_gpio_schedule_debounce(int state)
 {
+	/* [BOILERPLATE] Capture pending state and defer to debounce timer. */
 	bool changed = false;
 	(void)gpio_event_update(&app_gpio_state, state, k_uptime_get(), &changed);
 	(void)k_work_reschedule(&app_gpio_debounce_work, K_MSEC(APP_GPIO_DEBOUNCE_MS));
@@ -241,6 +253,7 @@ static void app_gpio_schedule_debounce(int state)
 
 static void app_gpio_isr(const struct device *dev, struct gpio_callback *cb, uint32_t pins)
 {
+	/* [BOILERPLATE] GPIO ISR glue: read input and schedule debounce. */
 	ARG_UNUSED(dev);
 	ARG_UNUSED(cb);
 	ARG_UNUSED(pins);
@@ -253,6 +266,7 @@ static void app_gpio_isr(const struct device *dev, struct gpio_callback *cb, uin
 static void app_gpio_poll_timer_handler(struct k_timer *timer)
 {
 	ARG_UNUSED(timer);
+	/* [BOILERPLATE] Polling fallback for platforms without GPIO interrupts. */
 	int state = app_gpio_read_state();
 	if (state >= 0 && state != app_gpio_raw_state) {
 		app_gpio_raw_state = state;
@@ -279,6 +293,7 @@ static void app_gpio_sim_timer_handler(struct k_timer *timer)
 
 static void app_gpio_init(void)
 {
+	/* [BOILERPLATE] Configure GPIO input and debounce path. */
 	gpio_event_init(&app_gpio_state, APP_GPIO_DEBOUNCE_MS);
 #if defined(CONFIG_SID_END_DEVICE_GPIO_TEST_MODE)
 	uint32_t r = sys_rand32_get();
@@ -340,6 +355,7 @@ static void app_gpio_init(void)
 
 static void on_sidewalk_event(bool in_isr, void *context)
 {
+	/* [3P-GLUE] Sidewalk SDK callback entrypoint (signature required). */
 	int err = sidewalk_event_send(sidewalk_event_process, NULL, NULL);
 	if (err) {
 		LOG_ERR("Send event err %d", err);
@@ -348,6 +364,7 @@ static void on_sidewalk_event(bool in_isr, void *context)
 
 static void app_handle_time_sync(const struct sid_msg *msg)
 {
+	/* [TELEMETRY] Parse time_sync downlink to switch timestamp source. */
 	if (!msg || !msg->data || msg->size == 0) {
 		return;
 	}
@@ -375,6 +392,7 @@ static void app_handle_time_sync(const struct sid_msg *msg)
 static void on_sidewalk_msg_received(const struct sid_msg_desc *msg_desc, const struct sid_msg *msg,
 				     void *context)
 {
+	/* [3P-GLUE] Sidewalk receive callback; bridge to app/time_sync logic. */
 	LOG_HEXDUMP_INF((uint8_t *)msg->data, msg->size, "Message received success");
 	printk(JSON_NEW_LINE(JSON_OBJ(JSON_NAME(
 		"on_msg_received", JSON_OBJ(JSON_VAL_sid_msg_desc("sid_msg_desc", msg_desc, 1))))));
@@ -409,6 +427,7 @@ static void on_sidewalk_msg_received(const struct sid_msg_desc *msg_desc, const 
 
 static void on_sidewalk_msg_sent(const struct sid_msg_desc *msg_desc, void *context)
 {
+	/* [3P-GLUE] Sidewalk send callback. */
 	LOG_INF("Message send success");
 	printk(JSON_NEW_LINE(JSON_OBJ(JSON_NAME(
 		"on_msg_sent", JSON_OBJ(JSON_VAL_sid_msg_desc("sid_msg_desc", msg_desc, 0))))));
@@ -420,6 +439,7 @@ static void on_sidewalk_msg_sent(const struct sid_msg_desc *msg_desc, void *cont
 static void on_sidewalk_send_error(sid_error_t error, const struct sid_msg_desc *msg_desc,
 				   void *context)
 {
+	/* [3P-GLUE] Sidewalk error callback. */
 	LOG_ERR("Message send err %d (%s)", (int)error, SID_ERROR_T_STR(error));
 	printk(JSON_NEW_LINE(JSON_OBJ(JSON_NAME(
 		"on_send_error",
@@ -432,6 +452,7 @@ static void on_sidewalk_send_error(sid_error_t error, const struct sid_msg_desc 
 
 static void on_sidewalk_factory_reset(void *context)
 {
+	/* [3P-GLUE] Sidewalk factory reset callback. */
 	ARG_UNUSED(context);
 #ifndef CONFIG_SID_END_DEVICE_CLI
 	LOG_INF("Factory reset notification received from sid api");
@@ -445,6 +466,7 @@ static void on_sidewalk_factory_reset(void *context)
 
 static void on_sidewalk_status_changed(const struct sid_status *status, void *context)
 {
+	/* [3P-GLUE] Sidewalk status callback; start/stop periodic telemetry. */
 	int err = 0;
 	uint32_t new_link_mask = status->detail.link_status_mask;
 	struct sid_status *new_status = sid_hal_malloc(sizeof(struct sid_status));
@@ -651,6 +673,7 @@ static struct sid_time_sync_config default_time_sync_config = {
 
 void app_start(void)
 {
+	/* [BOILERPLATE] App init and periodic work scheduling. */
 	time_sync_init();
 	if (app_buttons_init()) {
 		LOG_ERR("Cannot init buttons");
@@ -664,6 +687,7 @@ void app_start(void)
 	if (evse_init()) {
 		LOG_ERR("EVSE init failed");
 	} else {
+		/* [EVSE-LOGIC] Periodic EVSE sampling to emit state/session telemetry. */
 		k_work_init_delayable(&app_evse_work, app_evse_work_handler);
 		k_timer_init(&app_evse_timer, app_evse_timer_handler, NULL);
 		k_timer_start(&app_evse_timer, K_MSEC(APP_EVSE_SAMPLE_INTERVAL_MS),
@@ -681,6 +705,7 @@ void app_start(void)
 	application_state_working(&global_state_notifier, true);
 #endif
 
+	/* THIRD-PARTY BOUNDARY - DO NOT MODIFY: Sidewalk SDK callback wiring below. */
 	static sidewalk_ctx_t sid_ctx = { 0 };
 
 	static struct sid_event_callbacks event_callbacks = {

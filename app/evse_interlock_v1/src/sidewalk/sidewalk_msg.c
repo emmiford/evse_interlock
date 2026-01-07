@@ -1,5 +1,6 @@
 /*
- * Sidewalk message helper
+ * [3P-GLUE] Sidewalk message helper (alloc/copy/free around SDK APIs).
+ * [BOILERPLATE] Typical ownership pattern for SDK message buffers.
  */
 #include "sidewalk/sidewalk_msg.h"
 
@@ -14,6 +15,7 @@ LOG_MODULE_REGISTER(sidewalk_msg, CONFIG_SIDEWALK_LOG_LEVEL);
 
 static void sidewalk_msg_free_ctx(void *ctx)
 {
+	/* [BOILERPLATE] Free payload/context allocated for SDK send. */
 	sidewalk_msg_t *msg = (sidewalk_msg_t *)ctx;
 	if (!msg) {
 		return;
@@ -26,6 +28,7 @@ static void sidewalk_msg_free_ctx(void *ctx)
 
 int sidewalk_send_msg_copy(const struct sid_msg_desc *desc, const void *payload, size_t len)
 {
+	/* THIRD-PARTY BOUNDARY - DO NOT MODIFY: uses Sidewalk SDK memory APIs. */
 	if (!desc || !payload || len == 0) {
 		return -EINVAL;
 	}
@@ -56,6 +59,7 @@ int sidewalk_send_msg_copy(const struct sid_msg_desc *desc, const void *payload,
 
 int sidewalk_send_notify_json(const char *json, size_t len)
 {
+	/* [3P-GLUE] SDK message descriptor for uplink notify payloads. */
 	struct sid_msg_desc desc = {
 		.type = SID_MSG_TYPE_NOTIFY,
 		.link_type = SID_LINK_TYPE_ANY,

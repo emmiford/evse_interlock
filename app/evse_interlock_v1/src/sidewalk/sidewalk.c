@@ -3,6 +3,10 @@
  *
  * SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
  */
+/*
+ * [3P-GLUE] Sidewalk SDK thread + message queue wiring.
+ * [BOILERPLATE] Typical Zephyr work queue pattern; no EVSE logic here.
+ */
 #include <sid_api.h>
 #include <sid_error.h>
 #include "sidewalk/sidewalk.h"
@@ -34,6 +38,7 @@ static void sid_thread_entry(void *context, void *unused, void *unused2)
 		int err = k_msgq_get(&sidewalk_thread_msgq, &event, K_FOREVER);
 		switch (err) {
 		case 0: {
+			/* [3P-GLUE] Dispatch events to Sidewalk SDK callbacks. */
 			LOG_DBG("event received %p (%s) sidewalk workq usage (%d/%d) ( after get )",
 				(void *)(event.handler), EVENT_TO_NAME(event.handler),
 				k_msgq_num_used_get(&sidewalk_thread_msgq),
@@ -71,6 +76,7 @@ void sidewalk_start(sidewalk_ctx_t *context)
 
 int sidewalk_event_send(event_handler_t event, void *ctx, ctx_free free)
 {
+	/* [BOILERPLATE] Message-queue based async dispatch into Sidewalk thread. */
 	sidewalk_ctx_event_t ctx_event = {
 		.handler = event,
 		.ctx = ctx,

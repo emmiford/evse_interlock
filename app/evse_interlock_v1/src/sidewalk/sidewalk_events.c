@@ -3,6 +3,10 @@
  *
  * SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
  */
+/*
+ * [3P-GLUE] Sidewalk SDK event handlers; app glue only.
+ * THIRD-PARTY BOUNDARY - DO NOT MODIFY: sid_* calls are SDK integration points.
+ */
 
 #include "json_printer/sidTypes2str.h"
 #include "sidewalk/sidewalk.h"
