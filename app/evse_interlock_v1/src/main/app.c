@@ -13,6 +13,7 @@
 #include "main/app.h"
 #include "main/app_ble_auth.h"
 #include "main/app_buttons.h"
+#include "main/app_gpio.h"
 #include "sidewalk/sidewalk.h"
 #include <app_ble_config.h>
 #include <app_subGHz_config.h>
@@ -32,14 +33,12 @@
 #include <zephyr/kernel.h>
 #include <zephyr/smf.h>
 #include <zephyr/logging/log.h>
-#include <zephyr/drivers/gpio.h>
 #include <zephyr/sys/util.h>
 #include <zephyr/random/random.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "telemetry/gpio_event.h"
 #include "telemetry/evse.h"
 #include "sidewalk/sidewalk_msg.h"
 #include "telemetry/telemetry_evse.h"
@@ -52,9 +51,6 @@
 LOG_MODULE_REGISTER(app, CONFIG_SIDEWALK_LOG_LEVEL);
 
 #define APP_PERIODIC_SEND_INTERVAL K_SECONDS(30)
-#define APP_GPIO_DEBOUNCE_MS CONFIG_SID_END_DEVICE_GPIO_DEBOUNCE_MS
-#define APP_GPIO_POLL_INTERVAL_MS CONFIG_SID_END_DEVICE_GPIO_POLL_INTERVAL_MS
-#define APP_GPIO_SIM_INTERVAL_MS CONFIG_SID_END_DEVICE_GPIO_SIM_INTERVAL_MS
 #define APP_DEVICE_ID CONFIG_SID_END_DEVICE_DEVICE_ID
 #define APP_DEVICE_TYPE CONFIG_SID_END_DEVICE_DEVICE_TYPE
 #define APP_EVSE_SAMPLE_INTERVAL_MS CONFIG_SID_END_DEVICE_EVSE_SAMPLE_INTERVAL_MS
@@ -64,61 +60,12 @@ static struct k_work_delayable periodic_send_work;
 static bool periodic_send_started;
 static bool app_sidewalk_ready;
 
-#if defined(CONFIG_SID_END_DEVICE_GPIO_EVENTS) && defined(CONFIG_GPIO)
-/* [BOILERPLATE] GPIO ingest plumbing: ISR/poll + debounce + telemetry send. */
-#if DT_NODE_EXISTS(DT_ALIAS(extinput0))
-#define APP_GPIO_HAS_DT 1
-static const struct gpio_dt_spec app_gpio = GPIO_DT_SPEC_GET(DT_ALIAS(extinput0), gpios);
-#else
-#define APP_GPIO_HAS_DT 0
-#endif
-#define APP_GPIO_ALIAS "extinput0"
-
-static struct gpio_callback app_gpio_cb;
-static struct k_work_delayable app_gpio_debounce_work;
-static struct k_timer app_gpio_poll_timer;
-static struct gpio_event_state app_gpio_state;
-static int app_gpio_raw_state = -1;
-static bool app_gpio_use_polling;
-#if defined(CONFIG_SID_END_DEVICE_GPIO_SIMULATOR)
-static struct k_timer app_gpio_sim_timer;
-static bool app_gpio_simulator;
-static uint32_t app_gpio_sim_transitions;
-#else
-static const bool app_gpio_simulator = false;
-#endif
-#if defined(CONFIG_SID_END_DEVICE_GPIO_TEST_MODE)
-static char app_gpio_run_id[16];
-#else
-static const char *app_gpio_run_id = NULL;
-#endif
-
 #if defined(CONFIG_SID_END_DEVICE_EVSE_ENABLED)
 static struct k_work_delayable app_evse_work;
 static struct k_timer app_evse_timer;
 #endif
 
 static uint32_t app_event_seq;
-
-/* [BOILERPLATE] Hardware read abstraction for GPIO event input. */
-static int app_gpio_read_state(void)
-{
-#if defined(CONFIG_SID_END_DEVICE_GPIO_SIMULATOR)
-	if (app_gpio_simulator) {
-		return app_gpio_raw_state;
-	}
-#endif
-#if APP_GPIO_HAS_DT
-	int val = gpio_pin_get_dt(&app_gpio);
-	if (val < 0) {
-		LOG_ERR("GPIO read failed: %d", val);
-		return val;
-	}
-	return val;
-#else
-	return app_gpio_raw_state;
-#endif
-}
 
 static int64_t app_get_timestamp_ms(void)
 {
@@ -131,14 +78,16 @@ static void app_next_event_id(char *buf, size_t buf_len)
 {
 	uint32_t seq = ++app_event_seq;
 	uint32_t rand = sys_rand32_get();
+	const char *run_id = app_gpio_get_run_id();
 
-	if (app_gpio_run_id && app_gpio_run_id[0] != '\0') {
-		snprintf(buf, buf_len, "%s-%08x", app_gpio_run_id, seq);
+	if (run_id && run_id[0] != '\0') {
+		snprintf(buf, buf_len, "%s-%08x", run_id, seq);
 	} else {
 		snprintf(buf, buf_len, "%08x%08x", rand, seq);
 	}
 }
 
+#if defined(CONFIG_SID_END_DEVICE_GPIO_EVENTS) && defined(CONFIG_GPIO)
 static void app_gpio_send_event(const char *pin_alias, int state, gpio_edge_t edge)
 {
 	/* [TELEMETRY] GPIO event payload construction + Sidewalk uplink. */
@@ -151,10 +100,11 @@ static void app_gpio_send_event(const char *pin_alias, int state, gpio_edge_t ed
 	bool time_anomaly = time_sync_time_anomaly();
 	char event_id[32];
 	char payload[384];
+	const char *run_id = app_gpio_get_run_id();
 	app_next_event_id(event_id, sizeof(event_id));
 	int len = telemetry_build_gpio_payload_ex(payload, sizeof(payload), APP_DEVICE_ID,
 						  APP_DEVICE_TYPE, pin_alias, state, edge,
-						  timestamp_ms, app_gpio_run_id, event_id,
+						  timestamp_ms, run_id, event_id,
 						  time_anomaly);
 	if (len < 0) {
 		LOG_ERR("GPIO payload format failed");
@@ -174,6 +124,7 @@ static void app_gpio_send_event(const char *pin_alias, int state, gpio_edge_t ed
 		LOG_INF("Sidewalk send: ok 0");
 	}
 }
+#endif
 
 #if defined(CONFIG_SID_END_DEVICE_EVSE_ENABLED)
 static void app_evse_send_event(const struct evse_event *evt, int64_t timestamp_ms)
@@ -222,131 +173,6 @@ static void app_evse_timer_handler(struct k_timer *timer)
 	(void)k_work_reschedule(&app_evse_work, K_NO_WAIT);
 }
 #endif
-
-static void app_gpio_debounce_work_handler(struct k_work *work)
-{
-	ARG_UNUSED(work);
-	/* [BOILERPLATE] Work item to finish debounce and emit a single edge. */
-	int state = app_gpio_read_state();
-	if (state < 0) {
-		return;
-	}
-	bool changed = false;
-	gpio_edge_t edge = gpio_event_update(&app_gpio_state, state, k_uptime_get(), &changed);
-	if (changed) {
-		app_gpio_send_event(APP_GPIO_ALIAS, state, edge);
-	}
-}
-
-static void app_gpio_schedule_debounce(int state)
-{
-	/* [BOILERPLATE] Capture pending state and defer to debounce timer. */
-	bool changed = false;
-	(void)gpio_event_update(&app_gpio_state, state, k_uptime_get(), &changed);
-	(void)k_work_reschedule(&app_gpio_debounce_work, K_MSEC(APP_GPIO_DEBOUNCE_MS));
-}
-
-static void app_gpio_isr(const struct device *dev, struct gpio_callback *cb, uint32_t pins)
-{
-	/* [BOILERPLATE] GPIO ISR glue: read input and schedule debounce. */
-	ARG_UNUSED(dev);
-	ARG_UNUSED(cb);
-	ARG_UNUSED(pins);
-	int state = app_gpio_read_state();
-	if (state >= 0) {
-		app_gpio_schedule_debounce(state);
-	}
-}
-
-static void app_gpio_poll_timer_handler(struct k_timer *timer)
-{
-	ARG_UNUSED(timer);
-	/* [BOILERPLATE] Polling fallback for platforms without GPIO interrupts. */
-	int state = app_gpio_read_state();
-	if (state >= 0 && state != app_gpio_raw_state) {
-		app_gpio_raw_state = state;
-		app_gpio_schedule_debounce(state);
-	}
-}
-
-#if defined(CONFIG_SID_END_DEVICE_GPIO_SIMULATOR)
-static void app_gpio_sim_timer_handler(struct k_timer *timer)
-{
-	ARG_UNUSED(timer);
-#if defined(CONFIG_SID_END_DEVICE_GPIO_TEST_MODE)
-	if (app_gpio_sim_transitions >= CONFIG_SID_END_DEVICE_GPIO_TEST_TRANSITIONS) {
-		k_timer_stop(&app_gpio_sim_timer);
-		LOG_INF("GPIO test: done");
-		return;
-	}
-#endif
-	app_gpio_raw_state = (app_gpio_raw_state <= 0) ? 1 : 0;
-	app_gpio_sim_transitions++;
-	app_gpio_schedule_debounce(app_gpio_raw_state);
-}
-#endif
-
-static void app_gpio_init(void)
-{
-	/* [BOILERPLATE] Configure GPIO input and debounce path. */
-	gpio_event_init(&app_gpio_state, APP_GPIO_DEBOUNCE_MS);
-#if defined(CONFIG_SID_END_DEVICE_GPIO_TEST_MODE)
-	uint32_t r = sys_rand32_get();
-	snprintk(app_gpio_run_id, sizeof(app_gpio_run_id), "%08x", r);
-	LOG_INF("E2E run_id: %s", app_gpio_run_id);
-#endif
-
-#if defined(CONFIG_SID_END_DEVICE_GPIO_SIMULATOR)
-	app_gpio_simulator = true;
-#endif
-
-#if defined(CONFIG_SID_END_DEVICE_GPIO_SIMULATOR)
-	if (app_gpio_simulator) {
-		LOG_INF("GPIO simulator enabled");
-		app_gpio_raw_state = 0;
-		k_work_init_delayable(&app_gpio_debounce_work, app_gpio_debounce_work_handler);
-		k_timer_init(&app_gpio_sim_timer, app_gpio_sim_timer_handler, NULL);
-		k_timer_start(&app_gpio_sim_timer, K_MSEC(APP_GPIO_SIM_INTERVAL_MS),
-			      K_MSEC(APP_GPIO_SIM_INTERVAL_MS));
-		return;
-	}
-#endif
-
-#if APP_GPIO_HAS_DT
-	if (!device_is_ready(app_gpio.port)) {
-		LOG_ERR("GPIO device not ready");
-		return;
-	}
-
-	int err = gpio_pin_configure_dt(&app_gpio, GPIO_INPUT);
-	if (err) {
-		LOG_ERR("GPIO configure failed: %d", err);
-		return;
-	}
-
-	app_gpio_raw_state = app_gpio_read_state();
-	k_work_init_delayable(&app_gpio_debounce_work, app_gpio_debounce_work_handler);
-
-	err = gpio_pin_interrupt_configure_dt(&app_gpio, GPIO_INT_EDGE_BOTH);
-	if (err) {
-		LOG_WRN("GPIO interrupt not available (%d), using polling", err);
-		app_gpio_use_polling = true;
-	} else {
-		gpio_init_callback(&app_gpio_cb, app_gpio_isr, BIT(app_gpio.pin));
-		gpio_add_callback(app_gpio.port, &app_gpio_cb);
-		LOG_INF("GPIO interrupt enabled");
-	}
-
-	if (app_gpio_use_polling) {
-		k_timer_init(&app_gpio_poll_timer, app_gpio_poll_timer_handler, NULL);
-		k_timer_start(&app_gpio_poll_timer, K_MSEC(APP_GPIO_POLL_INTERVAL_MS),
-			      K_MSEC(APP_GPIO_POLL_INTERVAL_MS));
-	}
-#else
-	LOG_WRN("No extinput0 alias defined; GPIO events disabled");
-#endif
-}
-#endif /* CONFIG_SID_END_DEVICE_GPIO_EVENTS && CONFIG_GPIO */
 
 static void on_sidewalk_event(bool in_isr, void *context)
 {
@@ -402,7 +228,7 @@ static void on_sidewalk_msg_received(const struct sid_msg_desc *msg_desc, const 
 		LOG_INF("Send echo message");
 		struct sid_msg_desc desc = {
 			.type = (msg_desc->type == SID_MSG_TYPE_GET) ? SID_MSG_TYPE_RESPONSE :
-								     SID_MSG_TYPE_NOTIFY,
+							     SID_MSG_TYPE_NOTIFY,
 			.id = (msg_desc->type == SID_MSG_TYPE_GET) ? msg_desc->id : msg_desc->id + 1,
 			.link_type = SID_LINK_TYPE_ANY,
 			.link_mode = SID_LINK_MODE_CLOUD,
@@ -545,7 +371,7 @@ static void periodic_send_work_handler(struct k_work *work)
 
 #define MAX_TIME_SYNC_INTERVALS 10
 static uint16_t default_sync_intervals_h[MAX_TIME_SYNC_INTERVALS] = { 2, 4, 8,
-								      12 }; // default GCS intervals
+							      12 }; // default GCS intervals
 static struct sid_time_sync_config default_time_sync_config = {
 	.adaptive_sync_intervals_h = default_sync_intervals_h,
 	.num_intervals = sizeof(default_sync_intervals_h) / sizeof(default_sync_intervals_h[0]),
@@ -560,7 +386,7 @@ void app_start(void)
 	}
 	k_work_init_delayable(&periodic_send_work, periodic_send_work_handler);
 #if defined(CONFIG_SID_END_DEVICE_GPIO_EVENTS) && defined(CONFIG_GPIO)
-	app_gpio_init();
+	app_gpio_init(app_gpio_send_event);
 #endif
 
 #if defined(CONFIG_SID_END_DEVICE_EVSE_ENABLED)

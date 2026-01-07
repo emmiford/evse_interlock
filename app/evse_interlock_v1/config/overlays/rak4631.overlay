@@ -1,3 +1,5 @@
+#include <zephyr/dt-bindings/gpio/gpio.h>
+
 / {
 	chosen {
 		zephyr,lora-transceiver = &lora;
@@ -5,6 +7,14 @@
 
 	aliases {
 		lora-transceiver = &lora;
+		extinput0 = &extinput0;
+	};
+
+	gpio_keys: gpio_keys {
+		compatible = "gpio-keys";
+		extinput0: extinput0 {
+			gpios = <&gpio0 11 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+		};
 	};
 };
 

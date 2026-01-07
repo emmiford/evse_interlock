@@ -37,6 +37,7 @@ target_sources_ifdef(CONFIG_SIDEWALK_FILE_TRANSFER_DFU app PRIVATE
 target_sources(app PRIVATE
     src/main/app.c
     src/main/app_buttons.c
+    src/main/app_gpio.c
 )
 
 if(CONFIG_BT AND CONFIG_SIDEWALK_BLE)
