@@ -13,6 +13,7 @@
 #include "main/app.h"
 #include "main/app_ble_auth.h"
 #include "main/app_buttons.h"
+#include "main/app_evse.h"
 #include "main/app_gpio.h"
 #include "sidewalk/sidewalk.h"
 #include <app_ble_config.h>
@@ -53,17 +54,11 @@ LOG_MODULE_REGISTER(app, CONFIG_SIDEWALK_LOG_LEVEL);
 #define APP_PERIODIC_SEND_INTERVAL K_SECONDS(30)
 #define APP_DEVICE_ID CONFIG_SID_END_DEVICE_DEVICE_ID
 #define APP_DEVICE_TYPE CONFIG_SID_END_DEVICE_DEVICE_TYPE
-#define APP_EVSE_SAMPLE_INTERVAL_MS CONFIG_SID_END_DEVICE_EVSE_SAMPLE_INTERVAL_MS
 
 static uint32_t persistent_link_mask;
 static struct k_work_delayable periodic_send_work;
 static bool periodic_send_started;
 static bool app_sidewalk_ready;
-
-#if defined(CONFIG_SID_END_DEVICE_EVSE_ENABLED)
-static struct k_work_delayable app_evse_work;
-static struct k_timer app_evse_timer;
-#endif
 
 static uint32_t app_event_seq;
 
@@ -155,22 +150,6 @@ static void app_evse_send_event(const struct evse_event *evt, int64_t timestamp_
 	if (err) {
 		LOG_ERR("Sidewalk send: err %d", err);
 	}
-}
-
-static void app_evse_work_handler(struct k_work *work)
-{
-	ARG_UNUSED(work);
-	struct evse_event evt = { 0 };
-	int64_t ts_ms = app_get_timestamp_ms();
-	if (evse_poll(&evt, ts_ms)) {
-		app_evse_send_event(&evt, ts_ms);
-	}
-}
-
-static void app_evse_timer_handler(struct k_timer *timer)
-{
-	ARG_UNUSED(timer);
-	(void)k_work_reschedule(&app_evse_work, K_NO_WAIT);
 }
 #endif
 
@@ -390,14 +369,8 @@ void app_start(void)
 #endif
 
 #if defined(CONFIG_SID_END_DEVICE_EVSE_ENABLED)
-	if (evse_init()) {
+	if (app_evse_init(app_evse_send_event)) {
 		LOG_ERR("EVSE init failed");
-	} else {
-		/* [EVSE-LOGIC] Periodic EVSE sampling to emit state/session telemetry. */
-		k_work_init_delayable(&app_evse_work, app_evse_work_handler);
-		k_timer_init(&app_evse_timer, app_evse_timer_handler, NULL);
-		k_timer_start(&app_evse_timer, K_MSEC(APP_EVSE_SAMPLE_INTERVAL_MS),
-			      K_MSEC(APP_EVSE_SAMPLE_INTERVAL_MS));
 	}
 #endif
 

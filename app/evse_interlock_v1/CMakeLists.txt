@@ -24,6 +24,7 @@ src/telemetry/telemetry_evse.c
 )
 
 target_sources_ifdef(CONFIG_SID_END_DEVICE_EVSE_ENABLED app PRIVATE
+    src/main/app_evse.c
     src/telemetry/evse.c
 )
 

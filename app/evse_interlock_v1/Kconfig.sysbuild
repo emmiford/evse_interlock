@@ -25,7 +25,7 @@ config DFU_MULTI_IMAGE_PACKAGE_APP
 	default y
 
 config PM_EXTERNAL_FLASH_MCUBOOT_SECONDARY
-	default y if !SOC_NRF54L15
+	default n
 
 if SOC_SERIES_NRF53X
 
