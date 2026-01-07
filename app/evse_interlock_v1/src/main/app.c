@@ -11,6 +11,8 @@
 
 #include <state_notifier/state_notifier.h>
 #include "main/app.h"
+#include "main/app_ble_auth.h"
+#include "main/app_buttons.h"
 #include "sidewalk/sidewalk.h"
 #include <app_ble_config.h>
 #include <app_subGHz_config.h>
@@ -21,18 +23,12 @@
 #include "sidewalk/sbdt/dfu_file_transfer.h"
 #endif
 
-#if defined(CONFIG_BT) && defined(CONFIG_SIDEWALK_BLE)
-#include <bt_app_callbacks.h>
-#endif
-
 #if defined(CONFIG_GPIO)
 #include <state_notifier/notifier_gpio.h>
 #endif
 #if defined(CONFIG_LOG)
 #include <state_notifier/notifier_log.h>
 #endif
-#include <sidewalk_dfu/nordic_dfu.h>
-#include <buttons.h>
 #include <zephyr/kernel.h>
 #include <zephyr/smf.h>
 #include <zephyr/logging/log.h>
@@ -55,7 +51,6 @@
 
 LOG_MODULE_REGISTER(app, CONFIG_SIDEWALK_LOG_LEVEL);
 
-#define PARAM_UNUSED (0U)
 #define APP_PERIODIC_SEND_INTERVAL K_SECONDS(30)
 #define APP_GPIO_DEBOUNCE_MS CONFIG_SID_END_DEVICE_GPIO_DEBOUNCE_MS
 #define APP_GPIO_POLL_INTERVAL_MS CONFIG_SID_END_DEVICE_GPIO_POLL_INTERVAL_MS
@@ -541,127 +536,12 @@ static void on_sidewalk_status_changed(const struct sid_status *status, void *co
 		}
 	}
 }
-static void app_btn_send_msg(uint32_t unused)
-{
-	ARG_UNUSED(unused);
-
-	LOG_INF("Send hello message");
-	const char payload[] = "hello";
-	int err = sidewalk_send_notify_json(payload, sizeof(payload));
-	if (err) {
-		LOG_ERR("Send event err %d", err);
-	} else {
-#if defined(CONFIG_STATE_NOTIFIER)
-		application_state_sending(&global_state_notifier, true);
-#endif
-	}
-}
-
 static void periodic_send_work_handler(struct k_work *work)
 {
 	ARG_UNUSED(work);
-	app_btn_send_msg(PARAM_UNUSED);
+	app_btn_send_msg(0U);
 	(void)k_work_schedule(&periodic_send_work, APP_PERIODIC_SEND_INTERVAL);
 }
-
-static void app_event_exit_dfu_mode(sidewalk_ctx_t *sid, void *ctx)
-{
-	int err = -ENOTSUP;
-	// Exit from DFU state
-#if defined(CONFIG_SIDEWALK_DFU_SERVICE_BLE)
-	err = nordic_dfu_ble_stop();
-#endif
-	if (err) {
-		LOG_ERR("dfu stop err %d", err);
-	}
-}
-
-static void app_event_enter_dfu_mode(sidewalk_ctx_t *sid, void *ctx)
-{
-	int err = -ENOTSUP;
-
-	LOG_INF("Entering into DFU mode");
-#if defined(CONFIG_SIDEWALK_DFU_SERVICE_BLE)
-	err = nordic_dfu_ble_start();
-#endif
-	if (err) {
-		LOG_ERR("dfu start err %d", err);
-	}
-}
-
-static void app_btn_dfu_state(uint32_t unused)
-{
-	ARG_UNUSED(unused);
-	static bool go_to_dfu_state = true;
-	if (go_to_dfu_state) {
-		sidewalk_event_send(app_event_enter_dfu_mode, NULL, NULL);
-	} else {
-		sidewalk_event_send(app_event_exit_dfu_mode, NULL, NULL);
-	}
-
-	go_to_dfu_state = !go_to_dfu_state;
-}
-
-static void app_btn_connect(uint32_t unused)
-{
-	ARG_UNUSED(unused);
-	(void)sidewalk_event_send(sidewalk_event_connect, NULL, NULL);
-}
-
-static void app_btn_factory_reset(uint32_t unused)
-{
-	ARG_UNUSED(unused);
-	(void)sidewalk_event_send(sidewalk_event_factory_reset, NULL, NULL);
-}
-
-static void app_btn_link_switch(uint32_t unused)
-{
-	ARG_UNUSED(unused);
-	(void)sidewalk_event_send(sidewalk_event_link_switch, NULL, NULL);
-}
-
-static int app_buttons_init(void)
-{
-	button_set_action_short_press(DK_BTN1, app_btn_send_msg, PARAM_UNUSED);
-	button_set_action_long_press(DK_BTN1, app_btn_dfu_state, PARAM_UNUSED);
-	button_set_action_short_press(DK_BTN2, app_btn_connect, PARAM_UNUSED);
-	button_set_action_long_press(DK_BTN2, app_btn_factory_reset, PARAM_UNUSED);
-	button_set_action(DK_BTN3, app_btn_link_switch, PARAM_UNUSED);
-
-	return buttons_init();
-}
-
-#if defined(CONFIG_BT) && defined(CONFIG_SIDEWALK_BLE)
-static bool gatt_authorize(struct bt_conn *conn, const struct bt_gatt_attr *attr)
-{
-	struct bt_conn_info cinfo = {};
-	int ret = bt_conn_get_info(conn, &cinfo);
-	if (ret != 0) {
-		LOG_ERR("Failed to get id of connection err %d", ret);
-		return false;
-	}
-
-	if (cinfo.id == BT_ID_SIDEWALK) {
-		if (sid_ble_bt_attr_is_SMP(attr)) {
-			return false;
-		}
-	}
-
-#if defined(CONFIG_SIDEWALK_DFU)
-	if (cinfo.id == BT_ID_SMP_DFU) {
-		if (sid_ble_bt_attr_is_SIDEWALK(attr)) {
-			return false;
-		}
-	}
-#endif //defined(CONFIG_SIDEWALK_DFU)
-	return true;
-}
-
-static const struct bt_gatt_authorization_cb gatt_authorization_callbacks = {
-	.read_authorize = gatt_authorize,
-	.write_authorize = gatt_authorize,
-};
-#endif
 
 #define MAX_TIME_SYNC_INTERVALS 10
 static uint16_t default_sync_intervals_h[MAX_TIME_SYNC_INTERVALS] = { 2, 4, 8,
@@ -739,7 +619,7 @@ void app_start(void)
 	};
 
 #if defined(CONFIG_BT) && defined(CONFIG_SIDEWALK_BLE)
-	int err = bt_gatt_authorization_cb_register(&gatt_authorization_callbacks);
+	int err = app_ble_auth_init();
 	if (err) {
 		LOG_ERR("Registering GATT authorization callbacks failed (err %d)", err);
 		return;
