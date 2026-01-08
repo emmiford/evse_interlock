@@ -101,6 +101,16 @@ Layer 0C -- HIL safety invariants:
 - EVSE payloads are sent on pilot/proximity state changes.
 - Note: CLI commands are not available (CLI sources removed).
 
+### Line current monitoring (optional)
+- Enable `CONFIG_SID_END_DEVICE_LINE_CURRENT_ENABLED`.
+- Set `CONFIG_SID_END_DEVICE_LINE_CURRENT_ADC_CHANNEL` for the clamp input.
+- Calibrate `CONFIG_SID_END_DEVICE_LINE_CURRENT_SCALE_NUM` and
+  `CONFIG_SID_END_DEVICE_LINE_CURRENT_SCALE_DEN` (mA per mV).
+- Adjust `CONFIG_SID_END_DEVICE_LINE_CURRENT_DELTA_MA` to define
+  a "significant" change threshold.
+- Set `CONFIG_SID_END_DEVICE_LINE_CURRENT_SAMPLE_INTERVAL_MS` to control
+  sampling cadence (telemetry only emits on change).
+
 ### EVSE bring-up checklist
 - TODO: Calibrate `EVSE_PILOT_SCALE_*` and `EVSE_PILOT_BIAS_MV`.
 - TODO: Calibrate `EVSE_CURRENT_SCALE_*` for your current sensor.

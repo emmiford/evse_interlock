@@ -9,6 +9,7 @@
 
 #include "telemetry/telemetry_gpio.h"
 #include "telemetry/telemetry_evse.h"
+#include "telemetry/telemetry_line_current.h"
 
 #ifndef TEST_FIXTURES_DIR
 #define TEST_FIXTURES_DIR "app/evse_interlock_v1/tests/telemetry/host/fixtures"
@@ -66,6 +67,20 @@ void test_telemetry_required_fields(void)
 	assert(strstr(buf, "\"timestamp\":9876") != NULL);
 	assert(strstr(buf, "\"data\":{\"evse\"") != NULL);
 	assert(strstr(buf, "\"event_id\":\"evt-req-2\"") != NULL);
+
+	struct line_current_event line_evt = {
+		.send = true,
+		.current_a = 12.345f,
+		.event_type = "current_change",
+	};
+	len = telemetry_build_line_current_payload_ex(buf, sizeof(buf), "dev123", "evse",
+						      1111, &line_evt, "evt-req-3", true);
+	assert(len > 0);
+	assert(strstr(buf, "\"schema_version\":\"1.0\"") != NULL);
+	assert(strstr(buf, "\"timestamp\":1111") != NULL);
+	assert(strstr(buf, "\"time_anomaly\":true") != NULL);
+	assert(strstr(buf, "\"data\":{\"line_current\"") != NULL);
+	assert(strstr(buf, "\"event_id\":\"evt-req-3\"") != NULL);
 }
 
 void test_telemetry_golden_fixtures(void)

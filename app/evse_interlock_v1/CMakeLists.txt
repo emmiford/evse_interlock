@@ -21,11 +21,17 @@ src/sidewalk/time_sync.c
 src/telemetry/gpio_event.c
 src/telemetry/telemetry_gpio.c
 src/telemetry/telemetry_evse.c
+src/telemetry/telemetry_line_current.c
 )
 
 target_sources_ifdef(CONFIG_SID_END_DEVICE_EVSE_ENABLED app PRIVATE
     src/main/app_evse.c
     src/telemetry/evse.c
+)
+
+target_sources_ifdef(CONFIG_SID_END_DEVICE_LINE_CURRENT_ENABLED app PRIVATE
+    src/main/app_line_current.c
+    src/telemetry/line_current.c
 )
 
 target_sources_ifdef(CONFIG_SIDEWALK_FILE_TRANSFER app PRIVATE 

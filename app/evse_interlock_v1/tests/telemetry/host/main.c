@@ -10,6 +10,7 @@
 #include "safety_gate/safety_gate.h"
 #include "telemetry/telemetry_gpio.h"
 #include "telemetry/telemetry_evse.h"
+#include "telemetry/telemetry_line_current.h"
 #include "sidewalk/time_sync.h"
 
 void test_telemetry_required_fields(void);
@@ -74,6 +75,24 @@ static void test_evse_payload(void)
 	assert(strstr(buf, "\"proximity_detected\":true") != NULL);
 	assert(strstr(buf, "\"session_id\":\"session-1\"") != NULL);
 	assert(strstr(buf, "\"energy_delivered_kwh\":0.4567") != NULL);
+}
+
+static void test_line_current_payload(void)
+{
+	/* [TELEMETRY] Line current payload fields match schema. */
+	char buf[256];
+	struct line_current_event evt = {
+		.send = true,
+		.current_a = 12.345f,
+		.event_type = "current_change",
+	};
+
+	int len = telemetry_build_line_current_payload(buf, sizeof(buf), "dev123", "evse",
+						       7777, &evt, "evt-4");
+	assert(len > 0);
+	assert(strstr(buf, "\"event_type\":\"current_change\"") != NULL);
+	assert(strstr(buf, "\"data\":{\"line_current\"") != NULL);
+	assert(strstr(buf, "\"current_a\":12.345") != NULL);
 }
 
 static void test_safety_ac_on_at_boot(void)
@@ -199,6 +218,7 @@ int main(void)
 	test_gpio_debounce();
 	test_gpio_payloads();
 	test_evse_payload();
+	test_line_current_payload();
 	test_safety_ac_on_at_boot();
 	test_safety_ac_toggle_debounce();
 	test_safety_ac_unknown();

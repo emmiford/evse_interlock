@@ -7,6 +7,7 @@
 
 #include "telemetry/telemetry_gpio.h"
 #include "telemetry/telemetry_evse.h"
+#include "telemetry/telemetry_line_current.h"
 
 ZTEST(telemetry, test_gpio_payload_rising)
 {
@@ -66,6 +67,26 @@ ZTEST(telemetry, test_evse_payload_fields)
 	zassert_not_null(strstr(buf, "\"proximity_detected\":true"), NULL);
 	zassert_not_null(strstr(buf, "\"session_id\":\"session-1\""), NULL);
 	zassert_not_null(strstr(buf, "\"energy_delivered_kwh\":0.4567"), NULL);
+}
+
+ZTEST(telemetry, test_line_current_payload_fields)
+{
+	/* [TELEMETRY] Line current schema fields. */
+	char buf[256];
+	struct line_current_event evt = {
+		.send = true,
+		.current_a = 12.345f,
+		.event_type = "current_change",
+	};
+
+	int len = telemetry_build_line_current_payload(buf, sizeof(buf), "dev123", "evse",
+						       7777, &evt, "evt-4");
+	zassert_true(len > 0, NULL);
+	zassert_not_null(strstr(buf, "\"schema_version\":\"1.0\""), NULL);
+	zassert_not_null(strstr(buf, "\"event_type\":\"current_change\""), NULL);
+	zassert_not_null(strstr(buf, "\"event_id\":\"evt-4\""), NULL);
+	zassert_not_null(strstr(buf, "\"data\":{\"line_current\""), NULL);
+	zassert_not_null(strstr(buf, "\"current_a\":12.345"), NULL);
 }
 
 ZTEST_SUITE(telemetry, NULL, NULL, NULL, NULL, NULL);

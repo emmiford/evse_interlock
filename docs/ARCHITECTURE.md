@@ -19,6 +19,14 @@ Firmware capabilities:
 - Debounce + edge detection.
 - JSON telemetry payloads.
 
+Line current monitoring notes:
+- With a plain ADC input there is no change interrupt, so sampling is still required.
+- Telemetry only emits on change, but periodic sampling detects that change.
+- If hardware provides a comparator/alert pin (or the clamp is routed through one),
+  sampling can be gated by the comparator interrupt.
+- Otherwise the best options are a lower poll interval or adaptive sampling
+  (slow when stable, faster after a change).
+
 ## Payloads
 
 Current (GPIO event):

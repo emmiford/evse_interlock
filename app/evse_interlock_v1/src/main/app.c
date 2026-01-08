@@ -14,6 +14,7 @@
 #include "main/app_ble_auth.h"
 #include "main/app_buttons.h"
 #include "main/app_evse.h"
+#include "main/app_line_current.h"
 #include "main/app_gpio.h"
 #include "sidewalk/sidewalk.h"
 #include <app_ble_config.h>
@@ -44,6 +45,7 @@
 #include "sidewalk/sidewalk_msg.h"
 #include "telemetry/telemetry_evse.h"
 #include "telemetry/telemetry_gpio.h"
+#include "telemetry/telemetry_line_current.h"
 #include "sidewalk/time_sync.h"
 
 #include <json_printer/sidTypes2Json.h>
@@ -145,6 +147,35 @@ static void app_evse_send_event(const struct evse_event *evt, int64_t timestamp_
 		evse_pilot_state_to_char(evt->pilot_state), evt->proximity_detected,
 		(double)evt->pwm_duty_cycle, (double)evt->current_draw_a,
 		(double)evt->energy_kwh);
+
+	int err = sidewalk_send_notify_json(payload, (size_t)len);
+	if (err) {
+		LOG_ERR("Sidewalk send: err %d", err);
+	}
+}
+#endif
+
+#if defined(CONFIG_SID_END_DEVICE_LINE_CURRENT_ENABLED)
+static void app_line_current_send_event(const struct line_current_event *evt, int64_t timestamp_ms)
+{
+	/* [TELEMETRY] Line current payload construction + Sidewalk uplink. */
+	if (!app_sidewalk_ready) {
+		LOG_WRN("Sidewalk not ready; drop line current event");
+		return;
+	}
+
+	char event_id[32];
+	char payload[256];
+	app_next_event_id(event_id, sizeof(event_id));
+	int len = telemetry_build_line_current_payload_ex(payload, sizeof(payload), APP_DEVICE_ID,
+							  APP_DEVICE_TYPE, timestamp_ms, evt,
+							  event_id, time_sync_time_anomaly());
+	if (len < 0) {
+		LOG_ERR("Line current payload format failed");
+		return;
+	}
+
+	LOG_INF("Line current event: current=%.2fA", (double)evt->current_a);
 
 	int err = sidewalk_send_notify_json(payload, (size_t)len);
 	if (err) {
@@ -371,6 +402,12 @@ void app_start(void)
 #if defined(CONFIG_SID_END_DEVICE_EVSE_ENABLED)
 	if (app_evse_init(app_evse_send_event)) {
 		LOG_ERR("EVSE init failed");
+	}
+#endif
+
+#if defined(CONFIG_SID_END_DEVICE_LINE_CURRENT_ENABLED)
+	if (app_line_current_init(app_line_current_send_event)) {
+		LOG_ERR("Line current init failed");
 	}
 #endif
 

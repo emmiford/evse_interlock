@@ -159,6 +159,43 @@ config SID_END_DEVICE_EVSE_PILOT_TOLERANCE_MV
     help
       Tolerance applied to pilot voltage state mapping.
 
+config SID_END_DEVICE_LINE_CURRENT_ENABLED
+    bool "Enable Line Current Monitor"
+    default y
+    depends on ADC
+    help
+      Enables external current clamp monitoring upstream of EVSE.
+
+config SID_END_DEVICE_LINE_CURRENT_SAMPLE_INTERVAL_MS
+    int "Line current sample interval (ms)"
+    default 2000
+    help
+      Polling interval for line current measurements.
+
+config SID_END_DEVICE_LINE_CURRENT_ADC_CHANNEL
+    int "Line current ADC channel"
+    default 4
+    help
+      ADC channel for line current clamp input.
+
+config SID_END_DEVICE_LINE_CURRENT_SCALE_NUM
+    int "Line current scale numerator (mA per mV)"
+    default 1
+    help
+      Multiplier applied to line current ADC mV reading.
+
+config SID_END_DEVICE_LINE_CURRENT_SCALE_DEN
+    int "Line current scale denominator (mA per mV)"
+    default 1
+    help
+      Divider applied to line current ADC mV reading.
+
+config SID_END_DEVICE_LINE_CURRENT_DELTA_MA
+    int "Line current change threshold (mA)"
+    default 1000
+    help
+      Minimum delta between samples to emit a current_change event.
+
 config SID_END_DEVICE_DEVICE_ID
     string "Device ID for telemetry payloads"
     default "unknown"

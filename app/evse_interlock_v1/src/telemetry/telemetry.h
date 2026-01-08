@@ -7,5 +7,6 @@
 
 #include "telemetry/telemetry_gpio.h"
 #include "telemetry/telemetry_evse.h"
+#include "telemetry/telemetry_line_current.h"
 
 #endif /* TELEMETRY_H */
