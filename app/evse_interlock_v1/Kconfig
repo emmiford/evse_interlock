@@ -40,33 +40,20 @@ config SID_END_DEVICE_GPIO_POLL_INTERVAL_MS
     help
       Polling interval when interrupts are unavailable.
 
-config SID_END_DEVICE_GPIO_SIM_INTERVAL_MS
-    int "GPIO simulator interval (ms)"
-    default 2000
-    help
-      Interval for toggling the simulator input.
-
 config SID_END_DEVICE_GPIO_SIMULATOR
     bool "Enable GPIO input simulator"
     default y
     depends on SID_END_DEVICE_GPIO_EVENTS
     help
       Simulate a GPIO input change on a timer. Disable this when wiring
-      a real input to the extinput0 alias.
+      a real input to the hvac alias.
 
-config SID_END_DEVICE_GPIO_TEST_MODE
-    bool "Enable GPIO test mode (E2E)"
+config SID_END_DEVICE_RTT_HEARTBEAT
+    bool "Enable RTT heartbeat log"
     default n
-    depends on SID_END_DEVICE_GPIO_EVENTS
+    depends on LOG
     help
-      Generates a run_id at boot and includes it in GPIO payloads.
-
-config SID_END_DEVICE_GPIO_TEST_TRANSITIONS
-    int "Number of simulated transitions in test mode"
-    default 6
-    depends on SID_END_DEVICE_GPIO_TEST_MODE
-    help
-      Total simulated transitions before stopping the test.
+      Emit a log line every 5 seconds to verify RTT logging is active.
 
 config SID_END_DEVICE_EVSE_ENABLED
     bool "Enable EVSE (J1772) sensing"

@@ -7,12 +7,12 @@
 
 	aliases {
 		lora-transceiver = &lora;
-		extinput0 = &extinput0;
+		hvac = &hvac;
 	};
 
 	gpio_keys: gpio_keys {
 		compatible = "gpio-keys";
-		extinput0: extinput0 {
+		hvac: hvac {
 			gpios = <&gpio0 11 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
 		};
 	};

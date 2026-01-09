@@ -37,14 +37,14 @@ static void test_gpio_payloads(void)
 	/* [TELEMETRY] Schema fields for GPIO event payloads. */
 	char buf[384];
 	int len = telemetry_build_gpio_payload(buf, sizeof(buf), "dev123", "evse",
-					       "extinput0", 1, GPIO_EDGE_RISING, 1234,
-					       "abcd1234", "evt-1");
+					       "hvac", 1, GPIO_EDGE_RISING, 1234,
+					       NULL, "evt-1");
 	assert(len > 0);
 	assert(strstr(buf, "\"edge\":\"rising\"") != NULL);
-	assert(strstr(buf, "\"run_id\":\"abcd1234\"") != NULL);
+	assert(strstr(buf, "\"run_id\":null") != NULL);
 
 	len = telemetry_build_gpio_payload(buf, sizeof(buf), "dev123", "evse",
-					   "extinput0", 0, GPIO_EDGE_FALLING, 4321, NULL,
+					   "hvac", 0, GPIO_EDGE_FALLING, 4321, NULL,
 					   "evt-2");
 	assert(len > 0);
 	assert(strstr(buf, "\"edge\":\"falling\"") != NULL);

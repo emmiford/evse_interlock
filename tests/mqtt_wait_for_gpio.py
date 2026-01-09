@@ -24,7 +24,7 @@ def get_endpoint(region):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--run-id", required=True)
+    parser.add_argument("--pin", required=True)
     parser.add_argument("--topic", default="sidewalk/#")
     parser.add_argument("--timeout", type=int, default=60)
     parser.add_argument("--region", default=os.environ.get("AWS_REGION", "us-east-1"))
@@ -56,7 +56,7 @@ def main():
 
     def on_message_received(topic, payload, dup, qos, retain, **kwargs):
         text = payload.decode("utf-8", errors="replace")
-        if args.run_id in text:
+        if f"\\\"pin\\\":\\\"{args.pin}\\\"" in text:
             received["ok"] = True
             received["payload"] = text
 
@@ -73,12 +73,12 @@ def main():
     connection.disconnect().result()
 
     if not received["ok"]:
-        print("FAIL: run_id not received within timeout", file=sys.stderr)
+        print("FAIL: GPIO event not received within timeout", file=sys.stderr)
         return 1
     if args.outfile:
         with open(args.outfile, "w", encoding="utf-8") as out:
             out.write(received["payload"] or "")
-    print("PASS: run_id received")
+    print("PASS: GPIO event received")
     return 0
 
 

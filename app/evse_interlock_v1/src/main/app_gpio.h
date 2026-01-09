@@ -12,6 +12,5 @@
 typedef void (*app_gpio_event_handler_t)(const char *pin_alias, int state, gpio_edge_t edge);
 
 void app_gpio_init(app_gpio_event_handler_t handler);
-const char *app_gpio_get_run_id(void);
 
 #endif /* APP_GPIO_H */

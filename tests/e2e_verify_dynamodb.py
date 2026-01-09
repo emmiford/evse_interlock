@@ -14,7 +14,7 @@ def run_aws(cmd):
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--device-id", required=True)
-    parser.add_argument("--run-id", required=True)
+    parser.add_argument("--run-id", default=None)
     parser.add_argument("--event-id", default=None)
     parser.add_argument("--table", default=None)
     parser.add_argument("--region", default=None)
@@ -65,7 +65,7 @@ def main():
         items = data.get("Items", [])
         for item in items:
             run_id = item.get("run_id", {}).get("S")
-            if run_id != args.run_id:
+            if args.run_id is not None and run_id != args.run_id:
                 continue
             if args.event_id:
                 if item.get("event_id", {}).get("S") != args.event_id:
@@ -77,7 +77,7 @@ def main():
             time.sleep(args.poll_interval)
 
     if not match:
-        print("FAIL: run_id not found in DynamoDB query window", file=sys.stderr)
+        print("FAIL: no matching event found in DynamoDB query window", file=sys.stderr)
         return 1
 
     def require_attr(attr_name):

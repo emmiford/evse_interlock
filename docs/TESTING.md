@@ -1,11 +1,11 @@
 # Sidewalk GPIO Tests
 
 ## What input triggers E2E?
-- Trigger: simulator mode (no readable on-board button on RAK4631).
-- Alias: `extinput0` (defined in `app/evse_interlock_v1/config/overlays/rak4631.overlay`).
+- Trigger: HVAC input (no readable on-board button on RAK4631).
+- Alias: `hvac` (defined in `app/evse_interlock_v1/config/overlays/rak4631.overlay`).
 - Active level: active low (pull-up enabled in overlay).
-- Events per press: 2 (rising + falling) when using a real input; simulator toggles both edges.
-- E2E default: simulator mode with a unique `run_id` printed to UART and embedded in payloads.
+- Events per press: 2 (rising + falling) when using a real input.
+- E2E default: real HVAC input (simulator disabled).
 - Overlay config: `app/evse_interlock_v1/config/overlays/overlay-sidewalk_logging_v1.conf`
 
 Note: RAK4631 DTS has no `gpio-keys`/`button0` aliases; reset is wired to nRESET and is not a readable GPIO.
@@ -21,13 +21,13 @@ Note: RAK4631 DTS has no `gpio-keys`/`button0` aliases; reset is wired to nRESET
 ## Safety Invariants (V1)
 
 Hard requirements:
-- AC asserted => EV OFF (no exceptions).
+- HVAC asserted => EV OFF (no exceptions).
 - Any ambiguity => EV OFF (unknown input, invalid transition, timestamp anomaly,
   queue overflow, missing init).
 - Boot/reset/brownout => EV OFF by default.
 
 Definitions:
-- AC asserted means `extinput0` reads logical high after Zephyr polarity.
+- HVAC asserted means `hvac` reads logical high after Zephyr polarity.
 - EV OFF means `ev_allowed == false` and the enable GPIO is deasserted.
 
 Ambiguity cases (fail-safe):
@@ -42,7 +42,7 @@ Ambiguity cases (fail-safe):
 Layer 0A -- Host safety invariants:
 - Runs on: macOS + Linux
 - Command: `tests/test_unit_host.sh`
-- Focus: AC on at boot, debounce ambiguity, backward time, queue overflow
+- Focus: HVAC on at boot, debounce ambiguity, backward time, queue overflow
 
 Layer 0B -- Zephyr safety invariants:
 - Runs on: Linux only (native_posix)
@@ -52,7 +52,7 @@ Layer 0B -- Zephyr safety invariants:
 Layer 0C -- HIL safety invariants:
 - Runs on: device + RTT/UART
 - Command: `tests/test_hil_gpio.sh`
-- Focus: EV OFF when AC asserted; no allow during ambiguity
+- Focus: EV OFF when HVAC asserted; no allow during ambiguity
 
 ### Unit tests (host)
 - Focus: debounce, edge detection, telemetry payload formatting, no-spam behavior.
@@ -73,8 +73,7 @@ Layer 0C -- HIL safety invariants:
   - `HIL_MODE=safety` to enforce asserted input (no deasserted events)
   - `HIL_MODE=signal` to validate loopback transition counts
 - Expected output (RTT):
-  - `E2E run_id: <id>`
-  - `GPIO event: extinput0 state=<0/1> edge=<rising|falling> uptime_ms=<...>`
+  - `GPIO event: hvac state=<0/1> edge=<rising|falling> uptime_ms=<...>`
   - `Sidewalk send: ok 0`
 
 ### End-to-end AWS verification
@@ -150,7 +149,7 @@ DynamoDB idempotency:
 
 | Requirement | Host Test(s) | Zephyr Test(s) | HIL Test(s) |
 | --- | --- | --- | --- |
-| AC asserted => EV OFF | safety_gate host tests | safety_gate ztests | test_hil_gpio.sh (AC held ON) |
+| HVAC asserted => EV OFF | safety_gate host tests | safety_gate ztests | test_hil_gpio.sh (HVAC held ON) |
 | Ambiguity => EV OFF | host safety tests | safety_gate ztests | test_hil_gpio.sh |
 | Boot/reset => EV OFF | safety_gate host tests | safety_gate ztests | test_hil_gpio.sh |
 
@@ -188,4 +187,4 @@ skip the live run and rely on code review plus unit/Zephyr tests.
 - Unit tests: `build-tests/host/`.
 - Zephyr tests: `build-tests/telemetry/gpio_event/zephyr/`, `build-tests/telemetry/telemetry/zephyr/`.
 - HIL logs: `build/hil_gpio_rtt.log`.
-- E2E logs: `build/e2e_rtt.log`.
+- E2E payload capture: `build/e2e_payload.json`.

@@ -18,7 +18,7 @@ if [[ "${HIL_MODE}" == "signal" ]]; then
   EXTRA_ARGS+=(--mode signal --expected-transitions "${EXPECTED_TRANSITIONS}")
 fi
 if [[ "${HIL_MODE}" == "safety" ]]; then
-  EXTRA_ARGS+=(--mode safety --require-ac-asserted)
+  EXTRA_ARGS+=(--mode safety --require-hvac-asserted)
 fi
 
 if [[ -f "${SIDEWALK_PATCH}" ]]; then

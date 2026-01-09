@@ -49,7 +49,7 @@ Docs index:
 - Pure logic module:
   - `app/evse_interlock_v1/src/telemetry/gpio_event.h`
   - `app/evse_interlock_v1/src/telemetry/gpio_event.c`
-- Alias: `extinput0`
+- Alias: `hvac`
 - Alias definition: `app/evse_interlock_v1/config/overlays/rak4631.overlay`
 - Pin: `GPIO0.11` (active low, pull-up)
 
@@ -68,7 +68,7 @@ Docs index:
 - Destination: `SensorAppDestination`
 - IoT Core topic: `sidewalk/app_data`
 - E2E verification uses MQTT subscribe to `sidewalk/app_data` via `awsiotsdk`:
-  - `tests/mqtt_wait_for_run_id.py`
+  - `tests/mqtt_wait_for_gpio.py`
 
 7) Test plan status: implemented vs pending
 - Implemented:
@@ -78,7 +78,7 @@ Docs index:
   - Test plan doc: `docs/TESTING.md`
 - Pending:
   - Run unit/HIL/E2E tests to confirm in this environment.
-  - Optional: switch from simulator to real GPIO input wiring.
+  - Optional: switch from simulator to real HVAC input wiring.
 
 8) Known issues / gotchas
 - RAK4631 DTS has no readable user button (`gpio-keys`); reset is nRESET only.
@@ -100,8 +100,7 @@ Docs index:
   - `tests/test_unit_host.sh`
   - `tests/test_hil_gpio.sh`
   - `tests/test_hil_gpio.py`
-  - `tests/capture_rtt_run_id.py`
-  - `tests/mqtt_wait_for_run_id.py`
+  - `tests/mqtt_wait_for_gpio.py`
   - `tests/test_e2e_sidewalk.sh`
 - Edited:
   - `app/evse_interlock_v1/src/main/app.c`
@@ -120,19 +119,19 @@ Docs index:
 
 ### Files changed/created and why
 - `/Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1/src/main/app.c`
-  - Added GPIO change detection, debounce scheduling, simulator/test mode, run_id logging, and Sidewalk uplink send on state changes.
+  - Added GPIO change detection, debounce scheduling, and Sidewalk uplink send on state changes.
 - `/Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1/src/telemetry/gpio_event.h`
   - New pure-logic interface for debounce/edge detection and payload building (unit-testable).
 - `/Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1/src/telemetry/gpio_event.c`
   - New pure-logic implementation for debounce/edge detection and payload formatting.
 - `/Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1/Kconfig`
-  - Added GPIO test configs: debounce/poll intervals, simulator, and E2E test mode.
+  - Added GPIO debounce/poll configs and simulator controls.
 - `/Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1/CMakeLists.txt`
   - Added `src/telemetry/gpio_event.c` to build.
 - `/Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1/config/overlays/overlay-sidewalk_logging_v1.conf`
-  - Enabled GPIO events/simulator config for the hello variant.
+  - Enabled GPIO events for the hello variant.
 - `/Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1/config/overlays/rak4631.overlay`
-  - New `extinput0` GPIO alias for RAK4631 on GPIO0.11 (active low, pull-up).
+  - New `hvac` GPIO alias for RAK4631 on GPIO0.11 (active low, pull-up).
 - `/Users/jan/dev/sidewalk-workspace/app/evse_interlock_v1/tests/telemetry/gpio_event/*`
   - New ztest unit tests for debounce/edge/payload behavior (host-native).
 - `/Users/jan/dev/sidewalk-workspace/docs/TESTING.md`
@@ -149,12 +148,10 @@ Docs index:
   - HIL build/flash + RTT assert runner.
 - `/Users/jan/dev/sidewalk-workspace/tests/test_hil_gpio.py`
   - Parses RTT output for GPIO event + send ok.
-- `/Users/jan/dev/sidewalk-workspace/tests/capture_rtt_run_id.py`
-  - Captures `run_id` from RTT log for E2E.
-- `/Users/jan/dev/sidewalk-workspace/tests/mqtt_wait_for_run_id.py`
-  - MQTT (awsiotsdk) subscriber to confirm AWS receipt of `run_id`.
+- `/Users/jan/dev/sidewalk-workspace/tests/mqtt_wait_for_gpio.py`
+  - MQTT (awsiotsdk) subscriber to confirm AWS receipt of GPIO payloads.
 - `/Users/jan/dev/sidewalk-workspace/tests/test_e2e_sidewalk.sh`
-  - Automated E2E run: build/flash, capture run_id, verify AWS receipt.
+  - Automated E2E run: build/flash, wait for GPIO payload, verify AWS receipt.
 - `/Users/jan/dev/sidewalk-workspace/CODEX_HANDOFF.md`
   - This handoff document.
 
@@ -165,11 +162,10 @@ Docs index:
 ### Key snippets
 Payload format (from `gpio_event_build_payload`):
 ```
-{"source":"gpio","pin":"extinput0","state":<0/1>,"edge":"rising|falling","uptime_ms":<ms>,"run_id":"<id>"}
+{"source":"gpio","pin":"hvac","state":<0/1>,"edge":"rising|falling","uptime_ms":<ms>,"run_id":null}
 ```
 Run ID logging (from `app.c`):
 ```
-LOG_INF("E2E run_id: %s", app_gpio_run_id);
 ```
 GPIO event logging:
 ```

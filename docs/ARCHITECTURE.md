@@ -33,11 +33,11 @@ Current (GPIO event):
 ```
 {
   "source": "gpio",
-  "pin": "extinput0",
+  "pin": "hvac",
   "state": 0,
   "edge": "rising",
   "uptime_ms": 123456,
-  "run_id": "test123"
+  "run_id": null
 }
 ```
 
@@ -85,7 +85,7 @@ S3 archival:
 Rule: any ambiguity => EV OFF.
 
 Inputs:
-- AC input from `extinput0` (after Zephyr polarity).
+- HVAC input from `hvac` (after Zephyr polarity).
 - Timestamp (uptime or epoch).
 - Debounce config.
 - Queue overflow flag.

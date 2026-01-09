@@ -16,6 +16,7 @@
 #include "main/app_evse.h"
 #include "main/app_line_current.h"
 #include "main/app_gpio.h"
+#include "main/rtt_heartbeat.h"
 #include "sidewalk/sidewalk.h"
 #include <app_ble_config.h>
 #include <app_subGHz_config.h>
@@ -75,13 +76,7 @@ static void app_next_event_id(char *buf, size_t buf_len)
 {
 	uint32_t seq = ++app_event_seq;
 	uint32_t rand = sys_rand32_get();
-	const char *run_id = app_gpio_get_run_id();
-
-	if (run_id && run_id[0] != '\0') {
-		snprintf(buf, buf_len, "%s-%08x", run_id, seq);
-	} else {
-		snprintf(buf, buf_len, "%08x%08x", rand, seq);
-	}
+	snprintf(buf, buf_len, "%08x%08x", rand, seq);
 }
 
 #if defined(CONFIG_SID_END_DEVICE_GPIO_EVENTS) && defined(CONFIG_GPIO)
@@ -97,11 +92,10 @@ static void app_gpio_send_event(const char *pin_alias, int state, gpio_edge_t ed
 	bool time_anomaly = time_sync_time_anomaly();
 	char event_id[32];
 	char payload[384];
-	const char *run_id = app_gpio_get_run_id();
 	app_next_event_id(event_id, sizeof(event_id));
 	int len = telemetry_build_gpio_payload_ex(payload, sizeof(payload), APP_DEVICE_ID,
 						  APP_DEVICE_TYPE, pin_alias, state, edge,
-						  timestamp_ms, run_id, event_id,
+						  timestamp_ms, NULL, event_id,
 						  time_anomaly);
 	if (len < 0) {
 		LOG_ERR("GPIO payload format failed");
@@ -419,6 +413,10 @@ void app_start(void)
 	state_watch_init_log(&global_state_notifier);
 #endif
 	application_state_working(&global_state_notifier, true);
+#endif
+
+#if defined(CONFIG_SID_END_DEVICE_RTT_HEARTBEAT)
+	rtt_heartbeat_start();
 #endif
 
 	/* THIRD-PARTY BOUNDARY - DO NOT MODIFY: Sidewalk SDK callback wiring below. */

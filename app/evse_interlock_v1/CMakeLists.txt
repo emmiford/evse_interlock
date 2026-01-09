@@ -18,6 +18,7 @@ src/sidewalk/sidewalk.c
 src/sidewalk/sidewalk_events.c
 src/sidewalk/sidewalk_msg.c
 src/sidewalk/time_sync.c
+src/main/rtt_heartbeat.c
 src/telemetry/gpio_event.c
 src/telemetry/telemetry_gpio.c
 src/telemetry/telemetry_evse.c

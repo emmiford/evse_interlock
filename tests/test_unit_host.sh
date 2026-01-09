@@ -15,6 +15,7 @@ cc -std=c11 -Wall -Wextra -I"${SRC_DIR}/src" \
   "${SRC_DIR}/src/sidewalk/time_sync.c" \
   "${SRC_DIR}/src/telemetry/telemetry_gpio.c" \
   "${SRC_DIR}/src/telemetry/telemetry_evse.c" \
+  "${SRC_DIR}/src/telemetry/telemetry_line_current.c" \
   "${SRC_DIR}/tests/telemetry/host/main.c" \
   "${SRC_DIR}/tests/telemetry/host/telemetry_tests.c" \
   -o "${BUILD_DIR}/host_tests"

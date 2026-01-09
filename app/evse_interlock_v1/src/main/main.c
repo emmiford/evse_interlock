@@ -8,9 +8,12 @@
 #include <zephyr/logging/log.h>
 #include <sidewalk_version.h>
 
+LOG_MODULE_REGISTER(main, CONFIG_SIDEWALK_LOG_LEVEL);
+
 int main(void)
 {
 	PRINT_SIDEWALK_VERSION();
+	LOG_INF("App boot");
 
 	app_start();
 

@@ -12,7 +12,7 @@ def main():
     parser.add_argument("--outfile", required=True)
     parser.add_argument("--mode", choices=["basic", "signal", "safety"], default="basic")
     parser.add_argument("--expected-transitions", type=int, default=6)
-    parser.add_argument("--require-ac-asserted", action="store_true")
+    parser.add_argument("--require-hvac-asserted", action="store_true")
     args = parser.parse_args()
 
     cmd = [
@@ -26,8 +26,6 @@ def main():
 
     found_event = False
     found_send_ok = False
-    found_run_id = False
-    run_id = None
     transitions = 0
     last_edge = None
     saw_deasserted = False
@@ -43,9 +41,6 @@ def main():
                     continue
                 out.write(line)
                 out.flush()
-                if "E2E run_id:" in line:
-                    run_id = line.strip().split("E2E run_id:", 1)[1].strip()
-                    found_run_id = True
                 if "GPIO event:" in line:
                     found_event = True
                     transitions += 1
@@ -72,17 +67,12 @@ def main():
     if not found_send_ok:
         print("FAIL: no Sidewalk send ok in RTT output", file=sys.stderr)
         return 1
-    if not found_run_id:
-        print("WARN: no E2E run_id found in RTT output", file=sys.stderr)
-    if run_id and (len(run_id) != 8 or any(c not in "0123456789abcdef" for c in run_id.lower())):
-        print("FAIL: run_id format invalid", file=sys.stderr)
-        return 1
     if args.mode == "signal":
         if transitions < args.expected_transitions:
             print("FAIL: insufficient GPIO transitions", file=sys.stderr)
             return 1
-    if args.mode == "safety" and args.require_ac_asserted and saw_deasserted:
-        print("FAIL: AC deasserted during safety check", file=sys.stderr)
+    if args.mode == "safety" and args.require_hvac_asserted and saw_deasserted:
+        print("FAIL: HVAC deasserted during safety check", file=sys.stderr)
         return 1
     print("PASS: HIL GPIO test")
     return 0

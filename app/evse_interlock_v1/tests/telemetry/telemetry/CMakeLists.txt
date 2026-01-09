@@ -7,6 +7,7 @@ target_sources(app PRIVATE
 	src/main.c
 	../../../src/telemetry/telemetry_gpio.c
 	../../../src/telemetry/telemetry_evse.c
+	../../../src/telemetry/telemetry_line_current.c
 	../../../src/telemetry/gpio_event.c
 )
 

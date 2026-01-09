@@ -7,7 +7,6 @@ ROOT_DIR="/Users/jan/dev/sidewalk-workspace"
 BUILD_DIR="${ROOT_DIR}/build"
 APP_DIR="${ROOT_DIR}/app/evse_interlock_v1"
 PROBE_ID="${PROBE_ID:-0700000100120036470000124e544634a5a5a5a597969908}"
-RTT_LOG="${ROOT_DIR}/build/e2e_rtt.log"
 PAYLOAD_JSON="${ROOT_DIR}/build/e2e_payload.json"
 REGION="${AWS_REGION:-us-east-1}"
 PROJECT_PREFIX="${PROJECT_PREFIX:-sidewalk-v1}"
@@ -43,10 +42,7 @@ west build -p always -d "${BUILD_DIR}" -b rak4631 "${APP_DIR}" -- \
 west flash --runner pyocd --build-dir "${BUILD_DIR}" -- \
   --target nrf52840 --dev-id "${PROBE_ID}"
 
-RUN_ID="$(python3 "${ROOT_DIR}/tests/capture_rtt_run_id.py" --probe "${PROBE_ID}" --timeout 40 --logfile "${RTT_LOG}")"
-echo "run_id=${RUN_ID}"
-
-python3 "${ROOT_DIR}/tests/mqtt_wait_for_run_id.py" --run-id "${RUN_ID}" --timeout 90 --outfile "${PAYLOAD_JSON}"
+python3 "${ROOT_DIR}/tests/mqtt_wait_for_gpio.py" --pin "hvac" --timeout 90 --outfile "${PAYLOAD_JSON}"
 
 json_get() {
   python3 -c 'import json,sys; data=json.load(open(sys.argv[1], "r", encoding="utf-8")); print(data.get(sys.argv[2], ""))' \
@@ -72,7 +68,6 @@ fi
 
 python3 "${ROOT_DIR}/tests/e2e_verify_dynamodb.py" \
   --device-id "${DEVICE_ID}" \
-  --run-id "${RUN_ID}" \
   --event-id "${EVENT_ID}" \
   --since-ms "$((TIMESTAMP_MS - 600000))" \
   --region "${REGION}" \

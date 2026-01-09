@@ -49,8 +49,8 @@ void test_telemetry_required_fields(void)
 	};
 
 	int len = telemetry_build_gpio_payload_ex(buf, sizeof(buf), "dev123", "evse",
-						  "extinput0", 1, GPIO_EDGE_RISING, 1234,
-						  "abcd1234", "evt-req-1", true);
+						  "hvac", 1, GPIO_EDGE_RISING, 1234,
+						  NULL, "evt-req-1", true);
 	assert(len > 0);
 	assert(strstr(buf, "\"schema_version\":\"1.0\"") != NULL);
 	assert(strstr(buf, "\"device_id\":\"dev123\"") != NULL);
@@ -92,15 +92,15 @@ void test_telemetry_golden_fixtures(void)
 
 	read_fixture("telemetry_gpio_uptime.json", expected, sizeof(expected));
 	len = telemetry_build_gpio_payload_ex(actual, sizeof(actual), "dev123", "evse",
-					      "extinput0", 1, GPIO_EDGE_RISING, 1234,
-					      "abcd1234", "evt-uptime", false);
+					      "hvac", 1, GPIO_EDGE_RISING, 1234,
+					      NULL, "evt-uptime", false);
 	assert(len > 0);
 	assert(strcmp(actual, expected) == 0);
 
 	read_fixture("telemetry_gpio_epoch.json", expected, sizeof(expected));
 	len = telemetry_build_gpio_payload_ex(actual, sizeof(actual), "dev123", "evse",
-					      "extinput0", 1, GPIO_EDGE_RISING,
-					      1704067200000LL, "abcd1234", "evt-epoch",
+					      "hvac", 1, GPIO_EDGE_RISING,
+					      1704067200000LL, NULL, "evt-epoch",
 					      false);
 	assert(len > 0);
 	assert(strcmp(actual, expected) == 0);

@@ -15,35 +15,19 @@
 
 LOG_MODULE_DECLARE(app);
 
-#if defined(CONFIG_SID_END_DEVICE_GPIO_TEST_MODE)
-static char app_gpio_run_id[16];
-#endif
-
-const char *app_gpio_get_run_id(void)
-{
-#if defined(CONFIG_SID_END_DEVICE_GPIO_TEST_MODE)
-	if (app_gpio_run_id[0] == '\0') {
-		return NULL;
-	}
-	return app_gpio_run_id;
-#else
-	return NULL;
-#endif
-}
-
 #if defined(CONFIG_SID_END_DEVICE_GPIO_EVENTS) && defined(CONFIG_GPIO)
 #define APP_GPIO_DEBOUNCE_MS CONFIG_SID_END_DEVICE_GPIO_DEBOUNCE_MS
 #define APP_GPIO_POLL_INTERVAL_MS CONFIG_SID_END_DEVICE_GPIO_POLL_INTERVAL_MS
-#define APP_GPIO_SIM_INTERVAL_MS CONFIG_SID_END_DEVICE_GPIO_SIM_INTERVAL_MS
+#define APP_GPIO_SIM_INTERVAL_MS 2000
 
 /* [BOILERPLATE] GPIO ingest plumbing: ISR/poll + debounce + edge reporting. */
-#if DT_NODE_EXISTS(DT_ALIAS(extinput0))
+#if DT_NODE_EXISTS(DT_ALIAS(hvac))
 #define APP_GPIO_HAS_DT 1
-static const struct gpio_dt_spec app_gpio = GPIO_DT_SPEC_GET(DT_ALIAS(extinput0), gpios);
+static const struct gpio_dt_spec app_gpio = GPIO_DT_SPEC_GET(DT_ALIAS(hvac), gpios);
 #else
 #define APP_GPIO_HAS_DT 0
 #endif
-#define APP_GPIO_ALIAS "extinput0"
+#define APP_GPIO_ALIAS "hvac"
 
 static struct gpio_callback app_gpio_cb;
 static struct k_work_delayable app_gpio_debounce_work;
@@ -55,7 +39,6 @@ static app_gpio_event_handler_t app_gpio_event_handler;
 #if defined(CONFIG_SID_END_DEVICE_GPIO_SIMULATOR)
 static struct k_timer app_gpio_sim_timer;
 static bool app_gpio_simulator;
-static uint32_t app_gpio_sim_transitions;
 #else
 static const bool app_gpio_simulator = false;
 #endif
@@ -136,15 +119,7 @@ static void app_gpio_poll_timer_handler(struct k_timer *timer)
 static void app_gpio_sim_timer_handler(struct k_timer *timer)
 {
 	ARG_UNUSED(timer);
-#if defined(CONFIG_SID_END_DEVICE_GPIO_TEST_MODE)
-	if (app_gpio_sim_transitions >= CONFIG_SID_END_DEVICE_GPIO_TEST_TRANSITIONS) {
-		k_timer_stop(&app_gpio_sim_timer);
-		LOG_INF("GPIO test: done");
-		return;
-	}
-#endif
 	app_gpio_raw_state = (app_gpio_raw_state <= 0) ? 1 : 0;
-	app_gpio_sim_transitions++;
 	app_gpio_schedule_debounce(app_gpio_raw_state);
 }
 #endif
@@ -154,12 +129,6 @@ void app_gpio_init(app_gpio_event_handler_t handler)
 	app_gpio_event_handler = handler;
 	/* [BOILERPLATE] Configure GPIO input and debounce path. */
 	gpio_event_init(&app_gpio_state, APP_GPIO_DEBOUNCE_MS);
-#if defined(CONFIG_SID_END_DEVICE_GPIO_TEST_MODE)
-	uint32_t r = sys_rand32_get();
-	snprintk(app_gpio_run_id, sizeof(app_gpio_run_id), "%08x", r);
-	LOG_INF("E2E run_id: %s", app_gpio_run_id);
-#endif
-
 #if defined(CONFIG_SID_END_DEVICE_GPIO_SIMULATOR)
 	app_gpio_simulator = true;
 #endif
@@ -207,7 +176,7 @@ void app_gpio_init(app_gpio_event_handler_t handler)
 			      K_MSEC(APP_GPIO_POLL_INTERVAL_MS));
 	}
 #else
-	LOG_WRN("No extinput0 alias defined; GPIO events disabled");
+	LOG_WRN("No hvac alias defined; GPIO events disabled");
 #endif
 }
 #else
