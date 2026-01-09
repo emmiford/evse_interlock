@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 import json
 import os
+import time
+import uuid
 from decimal import Decimal
 
 import boto3
@@ -15,24 +17,53 @@ TTL_DAYS = 90
 def _normalize(item):
     return json.loads(json.dumps(item), parse_float=Decimal)
 
-
-def lambda_handler(event, context):
+def _parse_event(event):
     if isinstance(event, str):
-        event = json.loads(event)
+        try:
+            return json.loads(event)
+        except json.JSONDecodeError:
+            return {"raw": event}
 
     if isinstance(event, dict) and "message" in event and isinstance(event["message"], str):
-        event = json.loads(event["message"])
+        try:
+            return json.loads(event["message"])
+        except json.JSONDecodeError:
+            return {"raw": event["message"]}
 
-    if not isinstance(event, dict):
-        raise ValueError("invalid event payload")
+    if isinstance(event, dict):
+        return event
 
-    device_id = event.get("device_id")
-    event_id = event.get("event_id")
-    timestamp = event.get("timestamp")
-    if not device_id or not event_id or timestamp is None:
-        raise ValueError("missing required fields: device_id, event_id, timestamp")
+    return {"raw": event}
 
-    ts_ms = int(timestamp)
+def _coerce_int(value, default):
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def lambda_handler(event, context):
+    event = _parse_event(event)
+
+    device_id = (
+        event.get("device_id")
+        or event.get("deviceId")
+        or event.get("wireless_device_id")
+        or event.get("WirelessDeviceId")
+    )
+    event_id = event.get("event_id") or event.get("eventId")
+    timestamp = event.get("timestamp") or event.get("ts") or event.get("time")
+
+    now_ms = int(time.time() * 1000)
+    ts_ms = _coerce_int(timestamp, now_ms)
+    if not device_id:
+        device_id = "unknown"
+    if not event_id:
+        event_id = f"generated-{uuid.uuid4().hex}"
+
+    event["device_id"] = str(device_id)
+    event["event_id"] = str(event_id)
+    event["timestamp"] = ts_ms
     ttl = ts_ms // 1000 + TTL_DAYS * 24 * 60 * 60
 
     if not DEVICE_EVENTS_TABLE or not DEDUPE_TABLE:
