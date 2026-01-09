@@ -48,13 +48,6 @@ config SID_END_DEVICE_GPIO_SIMULATOR
       Simulate a GPIO input change on a timer. Disable this when wiring
       a real input to the hvac alias.
 
-config SID_END_DEVICE_RTT_HEARTBEAT
-    bool "Enable RTT heartbeat log"
-    default n
-    depends on LOG
-    help
-      Emit a log line every 5 seconds to verify RTT logging is active.
-
 config SID_END_DEVICE_EVSE_ENABLED
     bool "Enable EVSE (J1772) sensing"
     default y

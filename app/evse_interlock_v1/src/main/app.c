@@ -16,7 +16,6 @@
 #include "main/app_evse.h"
 #include "main/app_line_current.h"
 #include "main/app_gpio.h"
-#include "main/rtt_heartbeat.h"
 #include "sidewalk/sidewalk.h"
 #include <app_ble_config.h>
 #include <app_subGHz_config.h>
@@ -413,10 +412,6 @@ void app_start(void)
 	state_watch_init_log(&global_state_notifier);
 #endif
 	application_state_working(&global_state_notifier, true);
-#endif
-
-#if defined(CONFIG_SID_END_DEVICE_RTT_HEARTBEAT)
-	rtt_heartbeat_start();
 #endif
 
 	/* THIRD-PARTY BOUNDARY - DO NOT MODIFY: Sidewalk SDK callback wiring below. */
