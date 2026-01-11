@@ -1,9 +1,6 @@
 [submodule "sidewalk"]
 	path = sidewalk
 	url = https://github.com/nrfconnect/sdk-sidewalk
-[submodule "zephyr"]
-	path = zephyr
-	url = https://github.com/nrfconnect/sdk-zephyr
 [submodule "nrf"]
 	path = nrf
 	url = https://github.com/nrfconnect/sdk-nrf
