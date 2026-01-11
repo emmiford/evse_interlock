@@ -1,0 +1,12 @@
+/* Sidewalk manufacturing storage partition (nRF52840).
+ * Provision tool default address is 0xFD000.
+ */
+&flash0 {
+    partitions {
+        mfg_storage: partition@fd000 {
+            label = "mfg_storage";
+            reg = <0x000fd000 0x00003000>;
+        };
+    };
+};
+
