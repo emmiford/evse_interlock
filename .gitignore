@@ -40,8 +40,7 @@ __pycache__/
 build/
 zephyr/.config
 zephyr/include/generated/
-build_hello/
-
+build_hello_rtt/
 
 # Prerequisites
 *.d
