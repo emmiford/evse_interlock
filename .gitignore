@@ -38,6 +38,7 @@ __pycache__/
 # Zephyr / west
 .build/
 build/
+zephyr/
 zephyr/.config
 zephyr/include/generated/
 build_hello_rtt/
