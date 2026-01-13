@@ -108,6 +108,9 @@ build-tests/
 bootloader/
 modules/
 test/
+tools/bsim/
+tools/edtt/
+tools/net-tools/
 
 # Local output artifacts
 aws_setup_output.txt
