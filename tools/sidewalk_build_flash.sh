@@ -7,6 +7,7 @@ WORKSPACE="${WORKSPACE:-$HOME/dev/sidewalk-workspace}"
 BUILD_DIR="${BUILD_DIR:-$WORKSPACE/build}"
 OVERLAY_CONFIG="${OVERLAY_CONFIG:-config/overlays/overlay-sidewalk_logging_v1.conf}"
 BOARD_OVERLAY="${BOARD_OVERLAY:-config/overlays/rak4631.overlay}"
+MCUBOOT_OVERLAY="${MCUBOOT_OVERLAY:-$WORKSPACE/app/evse_interlock_v1/config/overlays/mcuboot_ext_flash.overlay}"
 BOARD="${BOARD:-rak4631}"
 MFG_ADDR="${MFG_ADDR:-0xFC000}"
 PROBE_ID="${PROBE_ID:-0700000100120036470000124e544634a5a5a5a597969908}"
@@ -18,6 +19,7 @@ PM_STATIC_YML="${PM_STATIC_YML:-$WORKSPACE/app/evse_interlock_v1/config/config/p
 PROVISION_DIR="${PROVISION_DIR:-$WORKSPACE/sidewalk/tools/provision}"
 CERT_JSON="${CERT_JSON:-$WORKSPACE/.secrets/sidewalk/certificate.json}"
 SIDEWALK_PATCH="${SIDEWALK_PATCH:-$WORKSPACE/app/evse_interlock_v1/patches/sidewalk-ble-off.patch}"
+SYSBUILD_CONF="${SYSBUILD_CONF:-$WORKSPACE/app/evse_interlock_v1/conf/sysbuild.conf}"
 
 if [[ ! -f "$PM_STATIC_YML" ]]; then
   echo "Missing PM static file: $PM_STATIC_YML" >&2
@@ -59,11 +61,22 @@ fi
 
 echo "=== Build ==="
 pushd "$WORKSPACE" >/dev/null
+sb_conf_arg=()
+if [[ -f "$SYSBUILD_CONF" ]]; then
+  sb_conf_arg=(-DSB_CONF_FILE:FILEPATH="$SYSBUILD_CONF")
+else
+  # Clear any cached sysbuild.conf when the file is absent.
+  sb_conf_arg=(-DSB_CONF_FILE:FILEPATH=)
+fi
 west build -p auto -d "$BUILD_DIR" -b "$BOARD" "$WORKSPACE/app/evse_interlock_v1" -- \
+  -DCONF_FILE:FILEPATH= \
+  -Devse_interlock_v1_APPLICATION_CONFIG_DIR:PATH="$WORKSPACE/app/evse_interlock_v1" \
   -DOVERLAY_CONFIG="$OVERLAY_CONFIG" \
   -DDTC_OVERLAY_FILE="$BOARD_OVERLAY" \
   -DPM_STATIC_YML_FILE:FILEPATH="$PM_STATIC_YML" \
-  -Dmcuboot_PM_STATIC_YML_FILE:FILEPATH="$PM_STATIC_YML"
+  -Dmcuboot_PM_STATIC_YML_FILE:FILEPATH="$PM_STATIC_YML" \
+  -Dmcuboot_DTC_OVERLAY_FILE:FILEPATH="$MCUBOOT_OVERLAY" \
+  "${sb_conf_arg[@]}"
 popd >/dev/null
 
 echo "=== Flash app (merged.hex) ==="
