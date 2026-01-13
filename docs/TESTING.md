@@ -2,11 +2,11 @@
 
 ## What input triggers E2E?
 - Trigger: HVAC input (no readable on-board button on RAK4631).
-- Alias: `hvac` (defined in `app/evse_interlock_v1/config/overlays/rak4631.overlay`).
+- Alias: `hvac` (defined in `app/evse_interlock_v1/conf/rak4631.overlay`).
 - Active level: active low (pull-up enabled in overlay).
 - Events per press: 2 (rising + falling) when using a real input.
 - E2E default: real HVAC input (simulator disabled).
-- Overlay config: `app/evse_interlock_v1/config/overlays/overlay-sidewalk_logging_v1.conf`
+- Logging: RTT is enabled in `app/evse_interlock_v1/conf/prj.conf`.
 
 Note: RAK4631 DTS has no `gpio-keys`/`button0` aliases; reset is wired to nRESET and is not a readable GPIO.
 
@@ -77,7 +77,7 @@ Layer 0C -- HIL safety invariants:
   - `Sidewalk send: ok 0`
 
 ### End-to-end AWS verification
-- Focus: payloads arriving on IoT Core topic `sidewalk/#`.
+- Focus: payloads arriving on IoT Core topic `sidewalk/app_data`.
 - Command:
   - `tests/test_e2e_sidewalk.sh`
 - Requirements:
